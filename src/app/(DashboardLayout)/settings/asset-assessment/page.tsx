@@ -295,10 +295,10 @@ const AssetAssessmentSettingsPage = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {categoryQuestions.map((question: any) => (
+                        {categoryQuestions.map((question: any, index: number) => (
                           <TableRow key={question.id}>
                             <TableCell className="font-medium">
-                              {question.id}
+                              {index + 1}
                             </TableCell>
                             <TableCell>
                               {editingQuestionId === question.id ? (

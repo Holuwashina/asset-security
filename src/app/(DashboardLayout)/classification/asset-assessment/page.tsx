@@ -120,9 +120,9 @@ const AssetAssessmentPage = () => {
       await identifyRiskMutation.mutateAsync({
         id: assetId,
         data: {
-          confidentiality: Math.floor(Math.random() * 5) + 1,
-          integrity: Math.floor(Math.random() * 5) + 1,
-          availability: Math.floor(Math.random() * 5) + 1
+          confidentiality: Math.random(), // 0-1 scale
+          integrity: Math.random(), // 0-1 scale
+          availability: Math.random() // 0-1 scale
         }
       });
       toast.success('Risk identified successfully');
@@ -367,15 +367,15 @@ const AssetAssessmentPage = () => {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                           <label className="text-sm text-gray-600">Confidentiality</label>
-                          <div className="font-medium">{selectedAsset.confidentiality}</div>
+                          <div className="font-medium">{selectedAsset.confidentiality ? (selectedAsset.confidentiality * 100).toFixed(0) + '%' : 'N/A'}</div>
                         </div>
                         <div>
                           <label className="text-sm text-gray-600">Integrity</label>
-                          <div className="font-medium">{selectedAsset.integrity}</div>
+                          <div className="font-medium">{selectedAsset.integrity ? (selectedAsset.integrity * 100).toFixed(0) + '%' : 'N/A'}</div>
                         </div>
                         <div>
                           <label className="text-sm text-gray-600">Availability</label>
-                          <div className="font-medium">{selectedAsset.availability}</div>
+                          <div className="font-medium">{selectedAsset.availability ? (selectedAsset.availability * 100).toFixed(0) + '%' : 'N/A'}</div>
                         </div>
                         <div>
                           <label className="text-sm text-gray-600">Risk Index</label>

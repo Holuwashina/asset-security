@@ -1,27 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, Asset } from '../api';
 
-// Minimal fallback data for development when API is not available
-const fallbackDepartments = [
-  { id: '1', name: 'IT Department', description: 'Information Technology' },
-  { id: '2', name: 'Finance Department', description: 'Financial Operations' },
-  { id: '3', name: 'HR Department', description: 'Human Resources' },
-];
-
-const fallbackAssetTypes = [
-  { id: '1', name: 'Database', description: 'Database systems' },
-  { id: '2', name: 'Application', description: 'Software applications' },
-  { id: '3', name: 'Network', description: 'Network infrastructure' },
-  { id: '4', name: 'Server', description: 'Server hardware' },
-];
-
-const fallbackAssetValues = [
-  { id: '1', name: 'Low', qualitative_value: 'Low', description: 'Low value assets' },
-  { id: '2', name: 'Medium', qualitative_value: 'Medium', description: 'Medium value assets' },
-  { id: '3', name: 'High', qualitative_value: 'High', description: 'High value assets' },
-  { id: '4', name: 'Critical', qualitative_value: 'Critical', description: 'Critical value assets' },
-];
-
 // Assets Hooks
 export const useAssets = () => {
   return useQuery({
@@ -165,9 +144,6 @@ export const useDepartments = () => {
     retryOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    // Provide fallback data when API is not available
-    placeholderData: fallbackDepartments,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -180,9 +156,6 @@ export const useAssetValues = () => {
     retryOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    // Provide fallback data when API is not available
-    placeholderData: fallbackAssetValues,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -195,9 +168,6 @@ export const useAssetTypes = () => {
     retryOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    // Provide fallback data when API is not available
-    placeholderData: fallbackAssetTypes,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -205,7 +175,18 @@ export const useAssessmentQuestions = () => {
   return useQuery({
     queryKey: ['assessment-questions'],
     queryFn: () => apiClient.getAssessmentQuestions(),
-    select: (data: any) => data?.results || data,
+    select: (data: any) => {
+      // Handle API response format and map to expected format
+      const questions = data?.results || data || [];
+      return questions.map((q: any) => ({
+        ...q,
+        questionText: q.question_text || q.questionText,
+        category: {
+          id: q.category?.id || q.category,
+          name: q.category_name || q.category?.name || 'Uncategorized'
+        }
+      }));
+    },
     retry: 0,
     retryOnMount: false,
     refetchOnWindowFocus: false,
@@ -222,8 +203,6 @@ export const usePerformanceMetrics = () => {
     retryOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    // Return empty array instead of undefined when no data
-    placeholderData: [],
   });
 };
 
@@ -232,7 +211,14 @@ export const useCreateAssessmentQuestion = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: any) => apiClient.createAssessmentQuestion(data),
+    mutationFn: (data: any) => {
+      // Map frontend data format to API format
+      const apiData = {
+        question_text: data.questionText,
+        category: data.category,
+      };
+      return apiClient.createAssessmentQuestion(apiData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assessment-questions'] });
     },
@@ -246,7 +232,14 @@ export const useUpdateAssessmentQuestion = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => apiClient.updateAssessmentQuestion(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => {
+      // Map frontend data format to API format
+      const apiData = {
+        question_text: data.questionText || data.question_text,
+        category: data.category,
+      };
+      return apiClient.updateAssessmentQuestion(id, apiData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assessment-questions'] });
     },

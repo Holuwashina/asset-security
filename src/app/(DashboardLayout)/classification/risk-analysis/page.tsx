@@ -147,15 +147,15 @@ const RiskAnalysisPage = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                     <div>
                       <Label className="text-xs text-gray-500">Confidentiality</Label>
-                      <div className="font-medium">{selectedAsset.confidentiality || 'N/A'}</div>
+                      <div className="font-medium">{selectedAsset.confidentiality ? (selectedAsset.confidentiality * 100).toFixed(0) + '%' : 'N/A'}</div>
                     </div>
                     <div>
                       <Label className="text-xs text-gray-500">Integrity</Label>
-                      <div className="font-medium">{selectedAsset.integrity || 'N/A'}</div>
+                      <div className="font-medium">{selectedAsset.integrity ? (selectedAsset.integrity * 100).toFixed(0) + '%' : 'N/A'}</div>
                     </div>
                     <div>
                       <Label className="text-xs text-gray-500">Availability</Label>
-                      <div className="font-medium">{selectedAsset.availability || 'N/A'}</div>
+                      <div className="font-medium">{selectedAsset.availability ? (selectedAsset.availability * 100).toFixed(0) + '%' : 'N/A'}</div>
                     </div>
                     <div>
                       <Label className="text-xs text-gray-500">Risk Index</Label>

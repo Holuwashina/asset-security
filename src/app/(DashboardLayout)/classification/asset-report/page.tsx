@@ -591,9 +591,9 @@ const AssetClassificationReportPage = () => {
                       {assets.filter((asset: Asset) => asset.risk_index).map((asset: Asset) => (
                         <TableRow key={asset.id}>
                           <TableCell className="font-medium">{asset.asset}</TableCell>
-                          <TableCell>{asset.confidentiality || 'N/A'}</TableCell>
-                          <TableCell>{asset.integrity || 'N/A'}</TableCell>
-                          <TableCell>{asset.availability || 'N/A'}</TableCell>
+                          <TableCell>{asset.confidentiality ? (asset.confidentiality * 100).toFixed(0) + '%' : 'N/A'}</TableCell>
+                          <TableCell>{asset.integrity ? (asset.integrity * 100).toFixed(0) + '%' : 'N/A'}</TableCell>
+                          <TableCell>{asset.availability ? (asset.availability * 100).toFixed(0) + '%' : 'N/A'}</TableCell>
                           <TableCell>{asset.risk_index?.toFixed(2) || 'N/A'}</TableCell>
                           <TableCell>{asset.calculated_risk_level?.toFixed(2) || 'N/A'}</TableCell>
                           <TableCell>

@@ -183,15 +183,15 @@ const AssetClassifyPage = () => {
                     </div>
                     <div>
                       <Label className="text-xs text-gray-500">C</Label>
-                      <div className="font-medium">{selectedAsset.confidentiality}</div>
+                      <div className="font-medium">{selectedAsset.confidentiality ? (selectedAsset.confidentiality * 100).toFixed(0) + '%' : 'N/A'}</div>
                     </div>
                     <div>
                       <Label className="text-xs text-gray-500">I</Label>
-                      <div className="font-medium">{selectedAsset.integrity}</div>
+                      <div className="font-medium">{selectedAsset.integrity ? (selectedAsset.integrity * 100).toFixed(0) + '%' : 'N/A'}</div>
                     </div>
                     <div>
                       <Label className="text-xs text-gray-500">A</Label>
-                      <div className="font-medium">{selectedAsset.availability}</div>
+                      <div className="font-medium">{selectedAsset.availability ? (selectedAsset.availability * 100).toFixed(0) + '%' : 'N/A'}</div>
                     </div>
                   </div>
                   

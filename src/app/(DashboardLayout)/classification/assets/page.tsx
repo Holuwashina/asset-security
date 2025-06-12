@@ -106,9 +106,9 @@ const AssetsPage = () => {
       await identifyRiskMutation.mutateAsync({
         id: assetId,
         data: {
-          confidentiality: Math.floor(Math.random() * 5) + 1,
-          integrity: Math.floor(Math.random() * 5) + 1,
-          availability: Math.floor(Math.random() * 5) + 1
+          confidentiality: Math.random(), // 0-1 scale
+          integrity: Math.random(), // 0-1 scale
+          availability: Math.random() // 0-1 scale
         }
       });
       toast.success('Risk identified successfully');
