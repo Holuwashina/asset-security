@@ -10,6 +10,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.db import transaction
@@ -109,6 +110,7 @@ class AssetListingViewSet(viewsets.ModelViewSet):
     ViewSet for managing asset listings with classification and risk analysis
     """
     queryset = AssetListing.objects.all().select_related('owner_department', 'asset_value')
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = [
         'asset_type', 'owner_department', 'asset_value',
@@ -135,6 +137,18 @@ class AssetListingViewSet(viewsets.ModelViewSet):
             asset = self.get_object()
             
             # Get asset value and department impact (ensure 0-1 scale)
+            if not asset.asset_value:
+                return Response(
+                    {'error': 'Asset must have an asset_value assigned'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not asset.owner_department or not asset.owner_department.asset_value_mapping:
+                return Response(
+                    {'error': 'Asset must have a department with asset_value_mapping assigned'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             asset_value = asset.asset_value.crisp_value
             # Convert department impact to 0-1 scale if it's in 0-10 scale
             department_impact = asset.owner_department.asset_value_mapping.crisp_value
@@ -199,7 +213,7 @@ class AssetListingViewSet(viewsets.ModelViewSet):
             # Ensure asset has classification
             if asset.classification_value is None:
                 return Response(
-                    {'error': 'Asset must be classified first (Phase 1)'},
+                    {'error': 'Asset must be classified first (Phase 1). Run classify_asset endpoint first.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -252,7 +266,7 @@ class AssetListingViewSet(viewsets.ModelViewSet):
             # Ensure asset has risk index
             if asset.risk_index is None:
                 return Response(
-                    {'error': 'Asset must have risk identification completed first (Phase 2)'},
+                    {'error': 'Asset must have risk identification completed first (Phase 2). Run identify_risk endpoint first.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             

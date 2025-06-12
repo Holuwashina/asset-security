@@ -82,15 +82,16 @@ def compute_risk_level(confidentiality, integrity, availability, classification_
         # Compute result
         risk_sim.compute()
         
-        return round(float(risk_sim.output['risk_index']), 2)
+        return round(float(risk_sim.output['risk_index']), 3)
         
     except Exception as e:
-        # Fallback to weighted average if fuzzy logic fails
+        print(f"Fuzzy risk computation error: {e}")
+        # Fallback to weighted average using 0-1 scale
         weights = [0.25, 0.25, 0.25, 0.25]  # Equal weights for CIA and classification
         values = [
-            min(max(confidentiality, 0), 10),
-            min(max(integrity, 0), 10),
-            min(max(availability, 0), 10),
-            min(max(classification_value, 0), 10)
+            min(max(confidentiality, 0), 1.0),
+            min(max(integrity, 0), 1.0),
+            min(max(availability, 0), 1.0),
+            min(max(classification_value, 0), 1.0)
         ]
-        return round(sum(w * v for w, v in zip(weights, values)), 2)
+        return round(sum(w * v for w, v in zip(weights, values)), 3)

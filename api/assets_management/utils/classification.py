@@ -57,17 +57,18 @@ def classify_asset(asset_value, department_impact):
         # Create simulation
         classification_sim = ctrl.ControlSystemSimulation(classification_ctrl)
         
-        # Set inputs
-        classification_sim.input['asset_value'] = min(asset_value, 100000)
-        classification_sim.input['department_impact'] = min(max(department_impact, 0), 10)
+        # Set inputs (ensure values are within valid ranges)
+        classification_sim.input['asset_value'] = min(max(asset_value, 0), 100000)
+        classification_sim.input['department_impact'] = min(max(department_impact, 0), 1.0)
         
         # Compute result
         classification_sim.compute()
         
-        return round(float(classification_sim.output['classification']), 2)
+        return round(float(classification_sim.output['classification']), 3)
         
     except Exception as e:
-        # Fallback to simple calculation if fuzzy logic fails
+        print(f"Fuzzy classification error: {e}")
+        # Fallback to simple calculation using 0-1 scale
         normalized_value = min(asset_value / 100000, 1.0)
-        normalized_impact = min(max(department_impact / 10, 0), 1.0)
-        return round((normalized_value * 0.6 + normalized_impact * 0.4) * 10, 2)
+        normalized_impact = min(max(department_impact, 0), 1.0)
+        return round((normalized_value * 0.6 + normalized_impact * 0.4), 3)
