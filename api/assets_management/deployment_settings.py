@@ -40,6 +40,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Local development
     "http://127.0.0.1:3000",  # Local development alternative
     "https://localhost:3000", # HTTPS local development
+    "https://asset-classification-frontend.onrender.com",  # Production frontend
 ]
 
 # Add Render frontend domain dynamically

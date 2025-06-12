@@ -13,10 +13,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: asset-classification-backend
-          property: host
+        value: https://asset-classification-backend.onrender.com/api
 
   # Backend - Django API
   - type: web
@@ -44,6 +41,8 @@ services:
         generateValue: true
       - key: ALLOWED_HOSTS
         value: "*"
+      - key: FRONTEND_URL
+        value: https://asset-classification-frontend.onrender.com
 
 # Database - PostgreSQL
 databases:
