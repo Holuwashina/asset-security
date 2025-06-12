@@ -105,8 +105,9 @@ export default function MLTrainingPage() {
   const checkApiStatus = async () => {
     setApiStatus('checking');
     try {
-      // Check if basic Django API is working
-      const response = await fetch('/api/assets/', {
+      // Check if basic Django API is working using the configured API URL
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${API_BASE_URL}/assets/`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -127,15 +128,17 @@ export default function MLTrainingPage() {
 
   const loadInitialData = async () => {
     try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      
       // Try to load datasets
-      const datasetsResponse = await fetch('/api/ml/list_datasets/');
+      const datasetsResponse = await fetch(`${API_BASE_URL}/ml/list_datasets/`);
       if (datasetsResponse.ok) {
         const datasetsData = await datasetsResponse.json();
         setDatasets(datasetsData.datasets || []);
       }
 
       // Try to load models
-      const modelsResponse = await fetch('/api/ml/list_models/');
+      const modelsResponse = await fetch(`${API_BASE_URL}/ml/list_models/`);
       if (modelsResponse.ok) {
         const modelsData = await modelsResponse.json();
         setTrainedModels(modelsData.models || []);
@@ -177,7 +180,8 @@ export default function MLTrainingPage() {
       formData.append('dataset_type', 'training');
       formData.append('model_name', modelName);
 
-      const response = await fetch('/api/ml/upload_dataset/', {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${API_BASE_URL}/ml/upload_dataset/`, {
         method: 'POST',
         body: formData,
       });
@@ -212,7 +216,8 @@ export default function MLTrainingPage() {
     }, 1000);
 
     try {
-      const response = await fetch('/api/ml/train_models/', {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${API_BASE_URL}/ml/train_models/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -249,7 +254,8 @@ export default function MLTrainingPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/ml/test_model/', {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${API_BASE_URL}/ml/test_model/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -277,7 +283,8 @@ export default function MLTrainingPage() {
 
   const handleDownloadReport = async (modelId: string) => {
     try {
-      const response = await fetch(`/api/ml/download_model_report/?model_id=${modelId}`);
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${API_BASE_URL}/ml/download_model_report/?model_id=${modelId}`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
