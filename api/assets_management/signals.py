@@ -6,8 +6,9 @@ from django.dispatch import receiver
 @receiver(post_migrate)
 def run_seeders(sender, **kwargs):
     if kwargs.get('app_config').name == 'assets_management':
-        call_command('seed_asset_value_mapping')
-        call_command('seed_asset_types')
-        call_command('seed_departments')
-        call_command('seed_assets')
-        call_command('seed_assessment_questions')
+        try:
+            call_command('seed_basic_data')
+            call_command('seed_assessment_questions')
+        except Exception as e:
+            # Silently handle seeding errors for development
+            pass

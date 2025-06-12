@@ -87,16 +87,23 @@ WSGI_APPLICATION = 'assets_management.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres.mwywedkuxjgvjxvknddw',
-        'PASSWORD': 'G8UL2WCmaVwIlB7o',  # Replace with your actual password
-        'HOST': 'aws-0-eu-central-1.pooler.supabase.com',
-        'PORT': '6543',
+# Database configuration with fallback to SQLite for local development
+import os
+
+if os.environ.get('DATABASE_URL'):
+    # Production database (Supabase or other PostgreSQL)
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
     }
-}
+else:
+    # Local development database (SQLite)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation

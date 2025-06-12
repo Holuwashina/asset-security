@@ -7,7 +7,6 @@ Updated to include ML training endpoints for CSV upload and model training.
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework.documentation import include_docs_urls
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 from .views import (
@@ -54,8 +53,7 @@ urlpatterns = [
     # API root - router provides the endpoints
     path('', include(router.urls)),
     
-    # API documentation
-    path('docs/', include_docs_urls(title='Cloud Asset Classification API')),
+    # API documentation available via Spectacular URLs below
     
     # OpenAPI schema endpoints
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
