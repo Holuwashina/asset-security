@@ -22,7 +22,7 @@ from datetime import datetime
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.http import HttpResponse
 from django.conf import settings
 
@@ -64,7 +64,7 @@ class ModelTrainingResultSerializer(serializers.Serializer):
 class MLTrainingViewSet(viewsets.ViewSet):
     """ViewSet for ML training operations"""
     
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
