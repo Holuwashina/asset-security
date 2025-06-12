@@ -1,0 +1,61 @@
+# Render deployment configuration for Asset Classification System
+# This file configures the full-stack deployment of Next.js frontend + Django backend
+
+services:
+  # Frontend - Next.js Application
+  - type: web
+    name: asset-classification-frontend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: asset-classification-backend
+          property: host
+
+  # Backend - Django API
+  - type: web
+    name: asset-classification-backend
+    env: python3
+    plan: free
+    rootDir: ./api
+    buildCommand: |
+      pip install -r requirements.txt &&
+      python manage.py collectstatic --noinput &&
+      python manage.py migrate &&
+      python manage.py seed_all_data --clear
+    startCommand: |
+      gunicorn assets_management.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: assets_management.deployment_settings
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: asset-classification-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: "*"
+
+# Database - PostgreSQL
+databases:
+  - name: asset-classification-db
+    databaseName: asset_classification
+    user: asset_user
+    plan: free
+
+# Cron Jobs (Optional - for future scheduled tasks)
+# jobs:
+#   - type: cron
+#     name: daily-cleanup
+#     schedule: "0 2 * * *"
+#     buildCommand: pip install -r requirements.txt
+#     startCommand: python manage.py cleanup_old_data
