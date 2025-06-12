@@ -1,0 +1,46 @@
+# Node.js
+node_modules/
+.next/
+out/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+venv.bak/
+env.bak/
+
+# Build
+build/
+dist/
+
+# Misc
+coverage/
+*.log
+.idea/
+.vscode/
+
+# Ignore lock files if not needed
+# package-lock.json
+yarn.lock
+pnpm-lock.yaml 

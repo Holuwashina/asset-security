@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "api/vercel_app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/vercel_app.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "assets_management.deployment_settings",
+    "PYTHONPATH": "/var/task/api"
+  },
+  "functions": {
+    "api/vercel_app.py": {
+      "runtime": "python3.9"
+    }
+  },
+  "installCommand": "npm install && cd api && pip install -r requirements.txt",
+  "buildCommand": "npm run build && cd api && python manage.py collectstatic --noinput",
+  "outputDirectory": ".next"
+}
