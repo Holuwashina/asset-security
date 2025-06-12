@@ -21,7 +21,7 @@ services:
   # Backend - Django API
   - type: web
     name: asset-classification-backend
-    env: python3
+    env: python
     plan: free
     rootDir: ./api
     buildCommand: |
