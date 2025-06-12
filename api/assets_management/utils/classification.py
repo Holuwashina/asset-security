@@ -12,31 +12,31 @@ def classify_asset(asset_value, department_impact):
     
     Args:
         asset_value (float): The monetary value of the asset
-        department_impact (float): The impact on department operations (0-10 scale)
+        department_impact (float): The impact on department operations (0-1 scale)
     
     Returns:
-        float: Classification value between 0 and 10
+        float: Classification value between 0 and 1
     """
     try:
-        # Define fuzzy variables
+        # Define fuzzy variables (using 0-1 scale)
         asset_val = ctrl.Antecedent(np.arange(0, 100001, 1), 'asset_value')
-        dept_impact = ctrl.Antecedent(np.arange(0, 11, 1), 'department_impact')
-        classification = ctrl.Consequent(np.arange(0, 11, 1), 'classification')
+        dept_impact = ctrl.Antecedent(np.arange(0, 1.01, 0.01), 'department_impact')
+        classification = ctrl.Consequent(np.arange(0, 1.01, 0.01), 'classification')
         
         # Define membership functions for asset value
         asset_val['low'] = fuzz.trimf(asset_val.universe, [0, 0, 25000])
         asset_val['medium'] = fuzz.trimf(asset_val.universe, [20000, 50000, 80000])
         asset_val['high'] = fuzz.trimf(asset_val.universe, [75000, 100000, 100000])
         
-        # Define membership functions for department impact
-        dept_impact['low'] = fuzz.trimf(dept_impact.universe, [0, 0, 3])
-        dept_impact['medium'] = fuzz.trimf(dept_impact.universe, [2, 5, 8])
-        dept_impact['high'] = fuzz.trimf(dept_impact.universe, [7, 10, 10])
+        # Define membership functions for department impact (0-1 scale)
+        dept_impact['low'] = fuzz.trimf(dept_impact.universe, [0, 0, 0.3])
+        dept_impact['medium'] = fuzz.trimf(dept_impact.universe, [0.2, 0.5, 0.8])
+        dept_impact['high'] = fuzz.trimf(dept_impact.universe, [0.7, 1.0, 1.0])
         
-        # Define membership functions for classification
-        classification['low'] = fuzz.trimf(classification.universe, [0, 0, 3])
-        classification['medium'] = fuzz.trimf(classification.universe, [2, 5, 8])
-        classification['high'] = fuzz.trimf(classification.universe, [7, 10, 10])
+        # Define membership functions for classification (0-1 scale)
+        classification['low'] = fuzz.trimf(classification.universe, [0, 0, 0.3])
+        classification['medium'] = fuzz.trimf(classification.universe, [0.2, 0.5, 0.8])
+        classification['high'] = fuzz.trimf(classification.universe, [0.7, 1.0, 1.0])
         
         # Define fuzzy rules
         rule1 = ctrl.Rule(asset_val['low'] & dept_impact['low'], classification['low'])

@@ -134,14 +134,17 @@ class AssetListingViewSet(viewsets.ModelViewSet):
         try:
             asset = self.get_object()
             
-            # Get asset value and department impact
+            # Get asset value and department impact (ensure 0-1 scale)
             asset_value = asset.asset_value.crisp_value
+            # Convert department impact to 0-1 scale if it's in 0-10 scale
             department_impact = asset.owner_department.asset_value_mapping.crisp_value
+            if department_impact > 1:
+                department_impact = department_impact / 10
             
-            # Perform fuzzy classification
+            # Perform fuzzy classification (function returns 0-1 scale)
             classification_value = classify_asset(asset_value, department_impact)
             
-            # Determine classification category
+            # Determine classification category based on 0-1 scale
             if classification_value <= 0.25:
                 classification = "Low"
             elif classification_value <= 0.5:
@@ -205,7 +208,7 @@ class AssetListingViewSet(viewsets.ModelViewSet):
             integrity = serializer.validated_data['integrity']
             availability = serializer.validated_data['availability']
             
-            # Compute risk index using fuzzy logic
+            # Compute risk index using fuzzy logic (all values are 0-1 scale)
             risk_index = compute_risk_level(
                 confidentiality, integrity, availability, asset.classification_value
             )
@@ -253,7 +256,7 @@ class AssetListingViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Calculate risk using mathematical formula
+            # Calculate risk using mathematical formula (0-1 scale)
             risk_analysis = calculate_risk_level(asset.risk_index)
             
             # Update asset

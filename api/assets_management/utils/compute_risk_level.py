@@ -11,32 +11,32 @@ def compute_risk_level(confidentiality, integrity, availability, classification_
     Compute risk level using fuzzy logic based on CIA triad and asset classification.
     
     Args:
-        confidentiality (float): Confidentiality impact (0-10 scale)
-        integrity (float): Integrity impact (0-10 scale)
-        availability (float): Availability impact (0-10 scale)
-        classification_value (float): Asset classification value (0-10 scale)
+        confidentiality (float): Confidentiality impact (0-1 scale)
+        integrity (float): Integrity impact (0-1 scale)
+        availability (float): Availability impact (0-1 scale)
+        classification_value (float): Asset classification value (0-1 scale)
     
     Returns:
-        float: Risk index between 0 and 10
+        float: Risk index between 0 and 1
     """
     try:
-        # Define fuzzy variables
-        conf = ctrl.Antecedent(np.arange(0, 11, 1), 'confidentiality')
-        integ = ctrl.Antecedent(np.arange(0, 11, 1), 'integrity')
-        avail = ctrl.Antecedent(np.arange(0, 11, 1), 'availability')
-        classif = ctrl.Antecedent(np.arange(0, 11, 1), 'classification')
-        risk_index = ctrl.Consequent(np.arange(0, 11, 1), 'risk_index')
+        # Define fuzzy variables (0-1 scale)
+        conf = ctrl.Antecedent(np.arange(0, 1.01, 0.01), 'confidentiality')
+        integ = ctrl.Antecedent(np.arange(0, 1.01, 0.01), 'integrity')
+        avail = ctrl.Antecedent(np.arange(0, 1.01, 0.01), 'availability')
+        classif = ctrl.Antecedent(np.arange(0, 1.01, 0.01), 'classification')
+        risk_index = ctrl.Consequent(np.arange(0, 1.01, 0.01), 'risk_index')
         
-        # Define membership functions for CIA triad
+        # Define membership functions for CIA triad (0-1 scale)
         for var in [conf, integ, avail, classif]:
-            var['low'] = fuzz.trimf(var.universe, [0, 0, 3])
-            var['medium'] = fuzz.trimf(var.universe, [2, 5, 8])
-            var['high'] = fuzz.trimf(var.universe, [7, 10, 10])
+            var['low'] = fuzz.trimf(var.universe, [0, 0, 0.3])
+            var['medium'] = fuzz.trimf(var.universe, [0.2, 0.5, 0.8])
+            var['high'] = fuzz.trimf(var.universe, [0.7, 1.0, 1.0])
         
-        # Define membership functions for risk index
-        risk_index['low'] = fuzz.trimf(risk_index.universe, [0, 0, 3])
-        risk_index['medium'] = fuzz.trimf(risk_index.universe, [2, 5, 8])
-        risk_index['high'] = fuzz.trimf(risk_index.universe, [7, 10, 10])
+        # Define membership functions for risk index (0-1 scale)
+        risk_index['low'] = fuzz.trimf(risk_index.universe, [0, 0, 0.3])
+        risk_index['medium'] = fuzz.trimf(risk_index.universe, [0.2, 0.5, 0.8])
+        risk_index['high'] = fuzz.trimf(risk_index.universe, [0.7, 1.0, 1.0])
         
         # Define comprehensive fuzzy rules
         rules = []

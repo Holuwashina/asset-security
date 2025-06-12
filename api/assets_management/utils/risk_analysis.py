@@ -9,24 +9,24 @@ def calculate_risk_level(risk_index):
     Calculate risk level using mathematical formula based on risk index.
     
     Args:
-        risk_index (float): Risk index value (0-10 scale)
+        risk_index (float): Risk index value (0-1 scale)
     
     Returns:
         dict: Risk analysis with level, score, and recommendations
     """
     try:
         # Ensure risk_index is within valid range
-        risk_index = min(max(float(risk_index), 0), 10)
+        risk_index = min(max(float(risk_index), 0), 1)
         
         # Calculate risk score using logarithmic scaling
         if risk_index == 0:
             risk_score = 0
         else:
-            # Use logarithmic scaling to provide better differentiation
-            risk_score = min(risk_index * (1 + math.log10(risk_index + 1)), 10)
+            # Use logarithmic scaling to provide better differentiation (scale to 0-1)
+            risk_score = min(risk_index * (1 + math.log10(risk_index * 10 + 1)) / 10, 1)
         
-        # Determine risk level based on score
-        if risk_score <= 2.5:
+        # Determine risk level based on score (0-1 scale)
+        if risk_score <= 0.25:
             risk_level = "Low"
             priority = "Low"
             recommendations = [
@@ -34,7 +34,7 @@ def calculate_risk_level(risk_index):
                 "Maintain current security measures",
                 "Review security annually"
             ]
-        elif risk_score <= 5.0:
+        elif risk_score <= 0.5:
             risk_level = "Medium"
             priority = "Medium"
             recommendations = [
@@ -43,7 +43,7 @@ def calculate_risk_level(risk_index):
                 "Conduct quarterly security reviews",
                 "Consider backup and recovery procedures"
             ]
-        elif risk_score <= 7.5:
+        elif risk_score <= 0.75:
             risk_level = "High"
             priority = "High"
             recommendations = [
