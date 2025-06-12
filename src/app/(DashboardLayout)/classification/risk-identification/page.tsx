@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-  useAsset, 
+import {
+  useAsset,
   useAssets,
   useIdentifyRisk,
-  useAssessmentQuestions 
+  useAssessmentQuestions,
+  Asset
 } from '@/lib/hooks/useAssets';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,7 +47,7 @@ const RiskIdentificationPage = () => {
 
   // Hooks
   const { data: assetsData, isLoading: assetsLoading } = useAssets();
-  const { data: selectedAsset, isLoading: assetLoading } = useAsset(selectedAssetId);
+  const { data: selectedAsset, isLoading: assetLoading } = useAsset(selectedAssetId) as { data: Asset | undefined, isLoading: boolean };
   const { data: questions, isLoading: questionsLoading } = useAssessmentQuestions();
   const identifyRiskMutation = useIdentifyRisk();
 

@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-  useAsset, 
+import {
+  useAsset,
   useAssets,
-  useAnalyzeRisk
+  useAnalyzeRisk,
+  Asset
 } from '@/lib/hooks/useAssets';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +42,7 @@ const RiskAnalysisPage = () => {
 
   // Hooks
   const { data: assetsData, isLoading: assetsLoading } = useAssets();
-  const { data: selectedAsset, isLoading: assetLoading } = useAsset(selectedAssetId);
+  const { data: selectedAsset, isLoading: assetLoading } = useAsset(selectedAssetId) as { data: Asset | undefined, isLoading: boolean };
   const analyzeRiskMutation = useAnalyzeRisk();
 
   const assets = assetsData?.results || [];
@@ -252,7 +253,7 @@ const RiskAnalysisPage = () => {
                         <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
                         <p className="text-green-600 font-medium">Risk Analysis Completed</p>
                         <p className="text-sm text-gray-600">
-                          Calculated Risk Level: {selectedAsset.calculated_risk_level.toFixed(2)}
+                          Calculated Risk Level: {selectedAsset.calculated_risk_level?.toFixed(2)}
                         </p>
                       </div>
                     ) : (
@@ -276,7 +277,7 @@ const RiskAnalysisPage = () => {
             </Card>
 
             {/* Risk Analysis Results */}
-            {(selectedAsset.calculated_risk_level || analysisComplete) && (
+            {(selectedAsset.calculated_risk_level != null || analysisComplete) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -290,14 +291,14 @@ const RiskAnalysisPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div className="text-center p-4 bg-blue-50 rounded-lg">
                         <div className="text-2xl font-bold text-blue-600">
-                          {(selectedAsset.risk_index * 0.2).toFixed(2)}
+                          {((selectedAsset.risk_index ?? 0) * 0.2).toFixed(2)}
                         </div>
                         <div className="text-sm text-gray-600">Probability</div>
                       </div>
                       
                       <div className="text-center p-4 bg-green-50 rounded-lg">
                         <div className="text-2xl font-bold text-green-600">
-                          {selectedAsset.harm_value?.toFixed(2) || (selectedAsset.risk_index * 1.1).toFixed(2)}
+                          {selectedAsset.harm_value?.toFixed(2) || ((selectedAsset.risk_index ?? 0) * 1.1).toFixed(2)}
                         </div>
                         <div className="text-sm text-gray-600">Impact/Harm</div>
                       </div>
@@ -310,8 +311,8 @@ const RiskAnalysisPage = () => {
                       </div>
                       
                       <div className="text-center p-4 bg-purple-50 rounded-lg">
-                        <Badge className={`${getRiskLevel(selectedAsset.calculated_risk_level).color} text-white`}>
-                          {selectedAsset.mathematical_risk_category || getRiskLevel(selectedAsset.calculated_risk_level).label}
+                        <Badge className={`${getRiskLevel(selectedAsset.calculated_risk_level ?? 0).color} text-white`}>
+                          {selectedAsset.mathematical_risk_category || getRiskLevel(selectedAsset.calculated_risk_level ?? 0).label}
                         </Badge>
                         <div className="text-sm text-gray-600 mt-1">Category</div>
                       </div>
@@ -331,9 +332,9 @@ const RiskAnalysisPage = () => {
                         </p>
                         <p>
                           <strong>Recommendation:</strong> {
-                            selectedAsset.calculated_risk_level > 3.5 ? 
+                            selectedAsset.calculated_risk_level && selectedAsset.calculated_risk_level > 3.5 ?
                             'Immediate risk mitigation measures should be implemented.' :
-                            selectedAsset.calculated_risk_level > 2.5 ?
+                            selectedAsset.calculated_risk_level && selectedAsset.calculated_risk_level > 2.5 ?
                             'Risk monitoring and moderate mitigation measures are recommended.' :
                             'Current risk levels are acceptable with standard monitoring.'
                           }

@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-  useAsset, 
+import {
+  useAsset,
   useAssets,
   useCompareModels,
-  usePerformanceMetrics
+  usePerformanceMetrics,
+  Asset
 } from '@/lib/hooks/useAssets';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,7 +45,7 @@ const AssetClassifyPage = () => {
 
   // Hooks
   const { data: assetsData, isLoading: assetsLoading } = useAssets();
-  const { data: selectedAsset, isLoading: assetLoading } = useAsset(selectedAssetId);
+  const { data: selectedAsset, isLoading: assetLoading } = useAsset(selectedAssetId) as { data: Asset | undefined, isLoading: boolean };
   const { data: performanceMetrics, isLoading: metricsLoading } = usePerformanceMetrics();
   const compareModelsMutation = useCompareModels();
 

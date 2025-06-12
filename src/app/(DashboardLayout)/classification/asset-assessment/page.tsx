@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useRouter, useSearchParams } from "next/navigation";
-import { 
+import {
   useAsset,
   useAssets,
   useAssessmentQuestions,
   useIdentifyRisk,
   useClassifyAsset,
   useAnalyzeRisk,
-  useCompareModels
+  useCompareModels,
+  Asset
 } from "@/lib/hooks/useAssets";
 import { toast } from "sonner";
 import { 
@@ -43,7 +44,7 @@ const AssetAssessmentPage = () => {
 
   // Hooks
   const { data: assetsData, isLoading: assetsLoading } = useAssets();
-  const { data: selectedAsset, isLoading: assetLoading } = useAsset(assetId || '');
+  const { data: selectedAsset, isLoading: assetLoading } = useAsset(assetId || '') as { data: Asset | undefined, isLoading: boolean };
   const { data: questions, isLoading: questionsLoading } = useAssessmentQuestions();
   const identifyRiskMutation = useIdentifyRisk();
   const classifyAssetMutation = useClassifyAsset();
@@ -217,22 +218,23 @@ const AssetAssessmentPage = () => {
     <PageContainer title="Asset Assessment" description="Complete asset security assessment">
       <div className="space-y-6">
         {/* Progress Header */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  {selectedAsset.asset}
-                </CardTitle>
-                <p className="text-sm text-gray-600 mt-1">{selectedAsset.description}</p>
+        {selectedAsset && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    {selectedAsset.asset}
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">{selectedAsset.description}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant="outline">{selectedAsset.asset_type}</Badge>
+                  <Badge variant="secondary">{selectedAsset.owner_department_name}</Badge>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Badge variant="outline">{selectedAsset.asset_type}</Badge>
-                <Badge variant="secondary">{selectedAsset.owner_department_name}</Badge>
-              </div>
-            </div>
-          </CardHeader>
+            </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between text-sm">
@@ -264,6 +266,7 @@ const AssetAssessmentPage = () => {
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Step Content */}
         <Card>

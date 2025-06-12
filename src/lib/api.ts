@@ -193,6 +193,9 @@ export interface Asset {
   traditional_fuzzy_prediction?: string;
   modern_svm_prediction?: string;
   modern_dt_prediction?: string;
+  harm_value?: number;
+  risk_treatment?: string;
+  treatment_notes?: string;
   created_at?: string;
   updated_at?: string;
 }

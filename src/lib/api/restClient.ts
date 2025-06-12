@@ -167,9 +167,9 @@ export interface Asset {
   description?: string;
   asset_type: string;
   owner_department: string;
-  owner_department_name: string;
+  owner_department_name?: string;
   asset_value: string;
-  asset_value_name: string;
+  asset_value_name?: string;
   classification?: string;
   classification_value?: number;
   confidentiality?: number;
@@ -183,8 +183,9 @@ export interface Asset {
   modern_svm_prediction?: string;
   modern_dt_prediction?: string;
   risk_treatment?: string;
-  created_at: string;
-  updated_at: string;
+  treatment_notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface PaginatedResponse<T> {
