@@ -116,28 +116,28 @@ const RiskHandlingPage = () => {
   };
 
   const getConsensusRisk = (asset: any) => {
-    if (!asset.traditional_fuzzy_prediction || !asset.modern_svm_prediction || !asset.modern_dt_prediction) {
+    // Backend already calculates consensus in mathematical_risk_category
+    // No frontend calculation needed - use backend result directly
+    if (!asset.mathematical_risk_category) {
       return 'Unknown';
     }
-
-    const predictions = [
-      asset.traditional_fuzzy_prediction,
-      asset.modern_svm_prediction,
-      asset.modern_dt_prediction
-    ];
-
-    const predictionCounts = predictions.reduce((acc: any, pred) => {
-      acc[pred] = (acc[pred] || 0) + 1;
-      return acc;
-    }, {});
-
-    const maxCount = Math.max(...Object.values(predictionCounts) as number[]);
-    return Object.keys(predictionCounts).find(key => predictionCounts[key] === maxCount) || 'Unknown';
+    
+    // Backend stores risk categories like 'Low Risk', 'Medium Risk', 'High Risk'
+    // Extract the risk level part for display
+    return asset.mathematical_risk_category.replace(' Risk', '');
   };
 
   const getRecommendedTreatments = (riskLevel: string) => {
-    return treatmentOptions.filter(option => 
-      option.recommended.includes(riskLevel)
+    // Convert display format back to backend format for comparison
+    const backendFormat = riskLevel === 'Medium' ? 'Moderate' : riskLevel;
+    
+    return treatmentOptions.filter(option =>
+      option.recommended.some(rec =>
+        rec === riskLevel || rec === backendFormat ||
+        (rec === 'Medium Risk' && riskLevel === 'Medium') ||
+        (rec === 'High Risk' && riskLevel === 'High') ||
+        (rec === 'Low Risk' && riskLevel === 'Low')
+      )
     );
   };
 
@@ -218,10 +218,6 @@ const RiskHandlingPage = () => {
                       <div className="font-medium">
                         {selectedAsset.risk_treatment || 'Not Set'}
                       </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-500">Asset Value</Label>
-                      <div className="font-medium">{selectedAsset.asset_value_name}</div>
                     </div>
                   </div>
 
@@ -391,8 +387,8 @@ const RiskHandlingPage = () => {
                         <div className="font-medium">{getConsensusRisk(selectedAsset)}</div>
                       </div>
                       <div>
-                        <Label className="text-sm text-gray-500">Asset Priority</Label>
-                        <div className="font-medium">{selectedAsset.asset_value_name}</div>
+                        <Label className="text-sm text-gray-500">Asset Category</Label>
+                        <div className="font-medium">{selectedAsset.asset_category}</div>
                       </div>
                     </div>
 

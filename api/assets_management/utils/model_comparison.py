@@ -263,3 +263,309 @@ class ModelComparisonFramework:
             
         except Exception as e:
             return {'error': f"Error generating insights: {str(e)}"}
+    
+    def compare_all_approaches(self, business_criticality, data_sensitivity, operational_dependency, regulatory_impact, confidentiality, integrity, availability):
+        """
+        Compare Enhanced 7-Parameter Fuzzy Logic vs Modern ML approaches for asset classification
+        This is the method called by views.py for Phase 4 model comparison
+        
+        Args:
+            business_criticality (float): Business impact if asset is compromised (0-1 scale)
+            data_sensitivity (float): Sensitivity level of data handled by asset (0-1 scale)
+            operational_dependency (float): Dependency of operations on this asset (0-1 scale)
+            regulatory_impact (float): Regulatory/compliance impact if compromised (0-1 scale)
+            confidentiality (float): Confidentiality requirement level (0-1 scale)
+            integrity (float): Integrity requirement level (0-1 scale)
+            availability (float): Availability requirement level (0-1 scale)
+            
+        Returns:
+            dict: Comprehensive comparison results
+        """
+        try:
+            # Import required modules for model implementations
+            from .classification import classify_asset_fuzzy
+            from sklearn.svm import SVC
+            from sklearn.tree import DecisionTreeClassifier
+            import numpy as np
+            
+            # Prepare input features for ML models (7 parameters, 0-1 scale)
+            features = np.array([[business_criticality, data_sensitivity, operational_dependency, 
+                                regulatory_impact, confidentiality, integrity, availability]])
+            
+            # 1. Enhanced 7-Parameter Fuzzy Logic Approach
+            try:
+                # Use the updated fuzzy classification function
+                fuzzy_result = classify_asset_fuzzy(
+                    business_criticality=business_criticality,
+                    data_sensitivity=data_sensitivity,
+                    operational_dependency=operational_dependency,
+                    regulatory_impact=regulatory_impact,
+                    confidentiality=confidentiality,
+                    integrity=integrity,
+                    availability=availability
+                )
+                
+                # Extract prediction from fuzzy result
+                traditional_fuzzy_prediction = fuzzy_result.get('classification_category', 'Error')
+                fuzzy_confidence = fuzzy_result.get('classification_score', 0.0)
+                
+            except Exception as e:
+                raise ValueError(f"Enhanced fuzzy logic classification failed: {str(e)}")
+            
+            # 2. Modern SVM Approach - Enhanced with 7-parameter training data
+            try:
+                # Enhanced SVM classifier with comprehensive 7-parameter training data
+                svm_model = SVC(kernel='rbf', gamma='scale', C=1.0, random_state=42)
+                
+                # Comprehensive 7-parameter training data based on industry patterns (24 samples)
+                X_train = np.array([
+                    # Public patterns - Very low risk (6 samples)
+                    [0.1, 0.2, 0.1, 0.1, 0.2, 0.2, 0.3], [0.2, 0.1, 0.2, 0.2, 0.1, 0.3, 0.2], 
+                    [0.3, 0.2, 0.1, 0.1, 0.3, 0.2, 0.1], [0.2, 0.3, 0.2, 0.1, 0.2, 0.1, 0.2],
+                    [0.1, 0.1, 0.3, 0.2, 0.1, 0.2, 0.3], [0.2, 0.2, 0.1, 0.3, 0.3, 0.1, 0.2],
+                    
+                    # Official patterns - Low-moderate risk (6 samples)
+                    [0.3, 0.4, 0.3, 0.2, 0.4, 0.4, 0.3], [0.4, 0.3, 0.4, 0.3, 0.3, 0.5, 0.4], 
+                    [0.5, 0.4, 0.2, 0.4, 0.4, 0.3, 0.5], [0.2, 0.5, 0.4, 0.3, 0.5, 0.4, 0.3],
+                    [0.3, 0.3, 0.5, 0.4, 0.3, 0.4, 0.4], [0.4, 0.2, 0.3, 0.5, 0.4, 0.5, 0.3],
+                    
+                    # Confidential patterns - Moderate-high risk (6 samples)
+                    [0.6, 0.7, 0.6, 0.5, 0.7, 0.7, 0.6], [0.7, 0.6, 0.7, 0.6, 0.6, 0.8, 0.7], 
+                    [0.8, 0.7, 0.5, 0.7, 0.7, 0.6, 0.8], [0.5, 0.8, 0.7, 0.6, 0.8, 0.7, 0.6],
+                    [0.6, 0.6, 0.8, 0.7, 0.6, 0.7, 0.7], [0.7, 0.5, 0.6, 0.8, 0.7, 0.8, 0.6],
+                    
+                    # Restricted patterns - High risk (6 samples)
+                    [0.8, 0.9, 0.8, 0.8, 0.9, 0.8, 0.7], [0.9, 0.8, 0.9, 0.8, 0.7, 0.9, 0.8], 
+                    [0.9, 0.9, 0.8, 0.9, 0.8, 0.7, 0.9], [0.8, 0.8, 0.9, 0.7, 0.8, 0.8, 0.8],
+                    [0.9, 0.7, 0.8, 0.8, 0.9, 0.9, 0.7], [0.7, 0.8, 0.9, 0.9, 0.7, 0.8, 0.9]
+                ])
+                y_train = ['Public', 'Public', 'Public', 'Public', 'Public', 'Public',
+                          'Official', 'Official', 'Official', 'Official', 'Official', 'Official',
+                          'Confidential', 'Confidential', 'Confidential', 'Confidential', 'Confidential', 'Confidential',
+                          'Restricted', 'Restricted', 'Restricted', 'Restricted', 'Restricted', 'Restricted']
+                
+                svm_model.fit(X_train, y_train)
+                svm_prediction = svm_model.predict(features)[0]
+                modern_svm_prediction = svm_prediction
+            except Exception as e:
+                raise ValueError(f"SVM classification failed: {str(e)}")
+            
+            # 3. Modern Decision Tree Approach - Enhanced with same 7-parameter training data
+            try:
+                # Enhanced Decision Tree with optimal parameters for 7-parameter input
+                dt_model = DecisionTreeClassifier(
+                    criterion='gini',
+                    max_depth=6,  # Increased depth for 7 parameters
+                    min_samples_split=2,
+                    min_samples_leaf=1,
+                    random_state=42
+                )
+                
+                # Use same comprehensive 7-parameter training data as SVM for fair comparison (24 samples)
+                X_train = np.array([
+                    # Public patterns - Very low risk (6 samples)
+                    [0.1, 0.2, 0.1, 0.1, 0.2, 0.2, 0.3], [0.2, 0.1, 0.2, 0.2, 0.1, 0.3, 0.2], 
+                    [0.3, 0.2, 0.1, 0.1, 0.3, 0.2, 0.1], [0.2, 0.3, 0.2, 0.1, 0.2, 0.1, 0.2],
+                    [0.1, 0.1, 0.3, 0.2, 0.1, 0.2, 0.3], [0.2, 0.2, 0.1, 0.3, 0.3, 0.1, 0.2],
+                    
+                    # Official patterns - Low-moderate risk (6 samples)
+                    [0.3, 0.4, 0.3, 0.2, 0.4, 0.4, 0.3], [0.4, 0.3, 0.4, 0.3, 0.3, 0.5, 0.4], 
+                    [0.5, 0.4, 0.2, 0.4, 0.4, 0.3, 0.5], [0.2, 0.5, 0.4, 0.3, 0.5, 0.4, 0.3],
+                    [0.3, 0.3, 0.5, 0.4, 0.3, 0.4, 0.4], [0.4, 0.2, 0.3, 0.5, 0.4, 0.5, 0.3],
+                    
+                    # Confidential patterns - Moderate-high risk (6 samples)
+                    [0.6, 0.7, 0.6, 0.5, 0.7, 0.7, 0.6], [0.7, 0.6, 0.7, 0.6, 0.6, 0.8, 0.7], 
+                    [0.8, 0.7, 0.5, 0.7, 0.7, 0.6, 0.8], [0.5, 0.8, 0.7, 0.6, 0.8, 0.7, 0.6],
+                    [0.6, 0.6, 0.8, 0.7, 0.6, 0.7, 0.7], [0.7, 0.5, 0.6, 0.8, 0.7, 0.8, 0.6],
+                    
+                    # Restricted patterns - High risk (6 samples)
+                    [0.8, 0.9, 0.8, 0.8, 0.9, 0.8, 0.7], [0.9, 0.8, 0.9, 0.8, 0.7, 0.9, 0.8], 
+                    [0.9, 0.9, 0.8, 0.9, 0.8, 0.7, 0.9], [0.8, 0.8, 0.9, 0.7, 0.8, 0.8, 0.8],
+                    [0.9, 0.7, 0.8, 0.8, 0.9, 0.9, 0.7], [0.7, 0.8, 0.9, 0.9, 0.7, 0.8, 0.9]
+                ])
+                y_train = ['Public', 'Public', 'Public', 'Public', 'Public', 'Public',
+                          'Official', 'Official', 'Official', 'Official', 'Official', 'Official',
+                          'Confidential', 'Confidential', 'Confidential', 'Confidential', 'Confidential', 'Confidential',
+                          'Restricted', 'Restricted', 'Restricted', 'Restricted', 'Restricted', 'Restricted']
+                
+                dt_model.fit(X_train, y_train)
+                dt_prediction = dt_model.predict(features)[0]
+                modern_dt_prediction = dt_prediction
+            except Exception as e:
+                raise ValueError(f"Decision Tree classification failed: {str(e)}")
+            
+            # Calculate consensus - all predictions should be valid since we removed fallbacks
+            predictions = [traditional_fuzzy_prediction, modern_svm_prediction, modern_dt_prediction]
+            
+            # Count occurrences
+            from collections import Counter
+            prediction_counts = Counter(predictions)
+            consensus_prediction = prediction_counts.most_common(1)[0][0]
+            
+            # Calculate classification scores for SVM and DT models
+            svm_score = self._calculate_classification_score(modern_svm_prediction)
+            dt_score = self._calculate_classification_score(modern_dt_prediction)
+            
+            # Return comprehensive results
+            return {
+                'input_features': {
+                    'business_criticality': business_criticality,
+                    'data_sensitivity': data_sensitivity,
+                    'operational_dependency': operational_dependency,
+                    'regulatory_impact': regulatory_impact,
+                    'confidentiality': confidentiality,
+                    'integrity': integrity,
+                    'availability': availability
+                },
+                'predictions': {
+                    'enhanced_fuzzy': traditional_fuzzy_prediction,
+                    'modern_svm': modern_svm_prediction,
+                    'modern_dt': modern_dt_prediction
+                },
+                'classification_scores': {
+                    'enhanced_fuzzy': fuzzy_confidence,
+                    'modern_svm': svm_score,
+                    'modern_dt': dt_score
+                },
+
+                'consensus': {
+                    'prediction': consensus_prediction,
+                    'agreement_level': f"3/3 models successful"
+                },
+                'approach_details': {
+                    'enhanced_fuzzy': 'Enhanced 7-Parameter Fuzzy Logic (NIST SP 800-60 & ISO 27005 Compliant)',
+                    'modern_svm': 'Support Vector Machine with RBF kernel (7-parameter)',
+                    'modern_dt': 'Decision Tree with Gini impurity (7-parameter)'
+                },
+                'methodology_comparison': {
+                    'parameters_used': 7,
+                    'standards_compliance': ['NIST SP 800-60', 'ISO 27005', 'ISO 27001'],
+                    'feature_categories': {
+                        'business_factors': ['business_criticality', 'operational_dependency', 'regulatory_impact'],
+                        'technical_factors': ['confidentiality', 'integrity', 'availability'],
+                        'data_factors': ['data_sensitivity']
+                    }
+                }
+            }
+            
+        except Exception as e:
+            # No fallback - raise the error to ensure proper implementation
+            raise ValueError(f"Model comparison failed: {str(e)}. Please check input parameters and model configurations.")
+    
+
+
+
+    
+
+    
+    def _calculate_classification_score(self, prediction):
+        """Convert categorical prediction to classification score (0-1 scale)"""
+        # Map government classification categories to their score ranges
+        classification_mapping = {
+            'Public': 0.125,        # Midpoint of 0.0-0.25 range
+            'Official': 0.375,      # Midpoint of 0.26-0.50 range  
+            'Confidential': 0.625,  # Midpoint of 0.51-0.75 range
+            'Restricted': 0.875     # Midpoint of 0.76-1.0 range
+        }
+        
+        return classification_mapping.get(prediction, 0.5)  # Default to middle if unknown
+    
+    def _convert_to_risk_category(self, fuzzy_result):
+        """
+        Convert fuzzy logic result to government classification format
+        
+        Args:
+            fuzzy_result: Output from fuzzy classifier
+            
+        Returns:
+            str: Government classification category ('Public', 'Official', 'Confidential', 'Restricted')
+        """
+        try:
+            # Handle different possible formats from fuzzy classifier
+            if isinstance(fuzzy_result, (int, float)):
+                # Numeric result (0-1 scale from FuzzyDirectRiskClassifier)
+                if fuzzy_result <= 0.25:
+                    return 'Public'
+                elif fuzzy_result <= 0.50:
+                    return 'Official'
+                elif fuzzy_result <= 0.75:
+                    return 'Confidential'
+                else:
+                    return 'Restricted'
+            elif isinstance(fuzzy_result, str):
+                # String result - standardize format to government classification
+                result_lower = fuzzy_result.lower()
+                if 'public' in result_lower:
+                    return 'Public'
+                elif 'official' in result_lower:
+                    return 'Official'
+                elif 'confidential' in result_lower:
+                    return 'Confidential'
+                elif 'restricted' in result_lower:
+                    return 'Restricted'
+                else:
+                    raise ValueError(f"Unknown fuzzy result format: {fuzzy_result}")
+            else:
+                raise ValueError(f"Invalid fuzzy result type: {type(fuzzy_result)}")
+                
+        except Exception as e:
+            raise ValueError(f"Risk category conversion failed: {str(e)}")
+    
+    def batch_comparison(self, test_data_list):
+        """
+        Perform batch comparison on multiple assets
+        
+        Args:
+            test_data_list: List of tuples (business_criticality, data_sensitivity, operational_dependency, 
+                           regulatory_impact, confidentiality, integrity, availability)
+            
+        Returns:
+            dict: Batch comparison results
+        """
+        try:
+            individual_results = []
+            successful_comparisons = 0
+            
+            for test_data in test_data_list:
+                if len(test_data) >= 7:
+                    business_criticality, data_sensitivity, operational_dependency, regulatory_impact, confidentiality, integrity, availability = test_data[:7]
+                    
+                    # Perform individual comparison using 7-parameter approach
+                    result = self.compare_all_approaches(
+                        business_criticality=business_criticality,
+                        data_sensitivity=data_sensitivity,
+                        operational_dependency=operational_dependency,
+                        regulatory_impact=regulatory_impact,
+                        confidentiality=confidentiality,
+                        integrity=integrity,
+                        availability=availability
+                    )
+                    
+                    individual_results.append(result)
+                    successful_comparisons += 1
+                else:
+                    raise ValueError(f"Invalid test data format - requires 7 parameters, got {len(test_data)}")
+            
+            # Calculate overall performance metrics
+            performance_metrics = {
+                'total_assets': len(test_data_list),
+                'successful_comparisons': successful_comparisons,
+                'success_rate': successful_comparisons / len(test_data_list) if test_data_list else 0
+            }
+            
+            return {
+                'individual_results': individual_results,
+                'performance_metrics': performance_metrics,
+                'batch_summary': {
+                    'total_processed': len(test_data_list),
+                    'successful': successful_comparisons,
+                    'failed': len(test_data_list) - successful_comparisons
+                }
+            }
+            
+        except Exception as e:
+            return {
+                'error': f"Batch comparison failed: {str(e)}",
+                'individual_results': [],
+                'performance_metrics': {}
+            }

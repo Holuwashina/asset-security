@@ -6,6 +6,11 @@ This script generates training and testing datasets that can be uploaded
 via the frontend to train machine learning models. Creates CSV files
 optimized for model training with proper train/test splits.
 
+Updated to match the new 7-parameter implementation:
+- business_criticality, data_sensitivity, operational_dependency, regulatory_impact
+- confidentiality, integrity, availability
+- Government classification levels: Public, Official, Confidential, Restricted
+
 Author: Asset Classification Framework
 Date: 2024
 License: MIT
@@ -25,16 +30,17 @@ np.random.seed(42)
 random.seed(42)
 
 class MLTrainingDatasetGenerator:
-    """Generate ML training and testing datasets"""
+    """Generate ML training and testing datasets with 7-parameter approach"""
     
     def __init__(self, total_samples: int = 2000):
         self.total_samples = total_samples
         self.setup_ml_features()
     
     def setup_ml_features(self):
-        """Setup features optimized for ML training"""
+        """Setup features optimized for 7-parameter ML training"""
         
-        # Asset categories (target for classification)
+        # Asset categories with strategically designed profiles for balanced class distribution
+        # Designed to generate roughly equal distribution across all 4 government classification levels
         self.asset_categories = {
             'Data': {
                 'examples': [
@@ -42,56 +48,88 @@ class MLTrainingDatasetGenerator:
                     'Intellectual Property', 'Medical Records', 'Legal Documents',
                     'Business Plans', 'Research Data', 'Trade Secrets'
                 ],
-                'cia_profile': {'C': 0.8, 'I': 0.9, 'A': 0.6}
+                'base_profile': {
+                    'business_criticality': 0.65,  # High-value data assets
+                    'data_sensitivity': 0.70,
+                    'operational_dependency': 0.55,
+                    'regulatory_impact': 0.65,
+                    'confidentiality': 0.70,
+                    'integrity': 0.65,
+                    'availability': 0.50
+                }
             },
             'Applications': {
                 'examples': [
                     'ERP System', 'CRM Software', 'Email System', 'Web Application',
                     'Mobile App', 'Database System', 'Analytics Platform'
                 ],
-                'cia_profile': {'C': 0.6, 'I': 0.8, 'A': 0.9}
+                'base_profile': {
+                    'business_criticality': 0.45,  # Medium business impact
+                    'data_sensitivity': 0.35,
+                    'operational_dependency': 0.55,
+                    'regulatory_impact': 0.35,
+                    'confidentiality': 0.35,
+                    'integrity': 0.50,
+                    'availability': 0.60
+                }
             },
             'Systems': {
                 'examples': [
                     'Database Server', 'Web Server', 'Domain Controller', 'File Server',
                     'Application Server', 'Workstation', 'Mobile Device'
                 ],
-                'cia_profile': {'C': 0.5, 'I': 0.7, 'A': 0.95}
+                'base_profile': {
+                    'business_criticality': 0.35,  # Infrastructure - lower direct business impact
+                    'data_sensitivity': 0.25,
+                    'operational_dependency': 0.45,
+                    'regulatory_impact': 0.25,
+                    'confidentiality': 0.25,
+                    'integrity': 0.40,
+                    'availability': 0.50
+                }
             },
             'Networks': {
                 'examples': [
                     'Core Network', 'DMZ Network', 'Internal LAN', 'Wireless Network',
                     'VPN Infrastructure', 'Firewall', 'Router'
                 ],
-                'cia_profile': {'C': 0.6, 'I': 0.7, 'A': 0.98}
+                'base_profile': {
+                    'business_criticality': 0.50,  # Critical for operations but lower data sensitivity
+                    'data_sensitivity': 0.15,
+                    'operational_dependency': 0.65,
+                    'regulatory_impact': 0.30,
+                    'confidentiality': 0.30,
+                    'integrity': 0.40,
+                    'availability': 0.70
+                }
             },
             'Services': {
                 'examples': [
                     'Authentication Service', 'DNS Service', 'Backup Service',
                     'Monitoring Service', 'Cloud Storage', 'Email Service'
                 ],
-                'cia_profile': {'C': 0.5, 'I': 0.8, 'A': 0.85}
+                'base_profile': {
+                    'business_criticality': 0.25,  # Support services - lowest baseline
+                    'data_sensitivity': 0.15,
+                    'operational_dependency': 0.35,
+                    'regulatory_impact': 0.15,
+                    'confidentiality': 0.15,
+                    'integrity': 0.30,
+                    'availability': 0.40
+                }
             }
         }
         
-        # Business contexts
+        # Business contexts with carefully calibrated multipliers for balanced distribution
+        # Designed to spread final scores across all 4 classification levels
         self.business_contexts = {
-            'Finance': {'risk_multiplier': 1.4, 'compliance_req': 'High'},
-            'Healthcare': {'risk_multiplier': 1.3, 'compliance_req': 'Very High'},
-            'Technology': {'risk_multiplier': 1.1, 'compliance_req': 'Medium'},
-            'Manufacturing': {'risk_multiplier': 1.0, 'compliance_req': 'Medium'},
-            'Retail': {'risk_multiplier': 0.9, 'compliance_req': 'Medium'},
-            'Education': {'risk_multiplier': 0.8, 'compliance_req': 'Low'},
-            'Government': {'risk_multiplier': 1.5, 'compliance_req': 'Very High'}
-        }
-        
-        # Asset values (business impact)
-        self.asset_values = {
-            'Very Low': {'score': 0.1, 'weight': 0.15},
-            'Low': {'score': 0.3, 'weight': 0.25},
-            'Medium': {'score': 0.5, 'weight': 0.30},
-            'High': {'score': 0.7, 'weight': 0.20},
-            'Very High': {'score': 0.9, 'weight': 0.10}
+            'Finance': {'risk_multiplier': 1.25, 'compliance_req': 'High'},
+            'Healthcare': {'risk_multiplier': 1.20, 'compliance_req': 'Very High'},
+            'Government': {'risk_multiplier': 1.30, 'compliance_req': 'Very High'},
+            'Technology': {'risk_multiplier': 0.95, 'compliance_req': 'Medium'},
+            'Manufacturing': {'risk_multiplier': 0.85, 'compliance_req': 'Medium'},
+            'Retail': {'risk_multiplier': 0.75, 'compliance_req': 'Medium'},
+            'Education': {'risk_multiplier': 0.65, 'compliance_req': 'Low'}
         }
         
         # Compliance frameworks
@@ -99,86 +137,116 @@ class MLTrainingDatasetGenerator:
             'GDPR', 'HIPAA', 'SOX', 'PCI-DSS', 'ISO27001', 'NIST', 'None'
         ]
     
-    def generate_ml_features(self, asset_category: str, business_context: str, 
-                           asset_value: str, compliance: str) -> Dict:
-        """Generate ML features for a single record"""
+    def generate_7_parameter_features(self, asset_category: str, business_context: str, 
+                                    compliance: str) -> Dict:
+        """Generate 7-parameter ML features for a single record"""
         
-        # Get base CIA scores
-        base_cia = self.asset_categories[asset_category]['cia_profile']
+        # Get base profile for asset category
+        base_profile = self.asset_categories[asset_category]['base_profile']
         
         # Apply business context multiplier
         context_multiplier = self.business_contexts[business_context]['risk_multiplier']
         
-        # Get asset value impact
-        value_impact = self.asset_values[asset_value]['score']
-        
         # Apply compliance factor
         compliance_factor = 1.2 if compliance != 'None' else 1.0
         
-        # Calculate CIA scores with variation
+        # Generate 7 parameters with controlled variation for balanced class distribution
+        # Increased standard deviation to create more spread across classification levels
+        business_criticality = np.clip(
+            base_profile['business_criticality'] * context_multiplier + 
+            np.random.normal(0, 0.15), 0.0, 1.0
+        )
+        
+        data_sensitivity = np.clip(
+            base_profile['data_sensitivity'] * compliance_factor + 
+            np.random.normal(0, 0.15), 0.0, 1.0
+        )
+        
+        operational_dependency = np.clip(
+            base_profile['operational_dependency'] * context_multiplier + 
+            np.random.normal(0, 0.12), 0.0, 1.0
+        )
+        
+        regulatory_impact = np.clip(
+            base_profile['regulatory_impact'] * compliance_factor + 
+            np.random.normal(0, 0.15), 0.0, 1.0
+        )
+        
         confidentiality = np.clip(
-            base_cia['C'] * context_multiplier * value_impact * compliance_factor + 
-            np.random.normal(0, 0.05), 0.0, 1.0
+            base_profile['confidentiality'] * compliance_factor + 
+            np.random.normal(0, 0.12), 0.0, 1.0
         )
         
         integrity = np.clip(
-            base_cia['I'] * context_multiplier * value_impact * compliance_factor + 
-            np.random.normal(0, 0.05), 0.0, 1.0
+            base_profile['integrity'] * context_multiplier + 
+            np.random.normal(0, 0.12), 0.0, 1.0
         )
         
         availability = np.clip(
-            base_cia['A'] * value_impact * compliance_factor + 
-            np.random.normal(0, 0.05), 0.0, 1.0
+            base_profile['availability'] * context_multiplier + 
+            np.random.normal(0, 0.12), 0.0, 1.0
         )
         
-        # Calculate derived features
-        cia_average = (confidentiality + integrity + availability) / 3
-        cia_max = max(confidentiality, integrity, availability)
-        cia_variance = np.var([confidentiality, integrity, availability])
+        # Calculate overall risk score using proper weighted approach
+        # This matches the enhanced fuzzy system logic but ensures balanced distribution
         
-        # Risk calculation
-        risk_score = cia_average * value_impact * context_multiplier
-        risk_score = np.clip(risk_score, 0.0, 1.0)
+        # Method 1: Weighted Component Approach (Primary)
+        # Business factors (60%): Business criticality, operational dependency, regulatory impact
+        business_component = (business_criticality * 0.4 + operational_dependency * 0.3 + regulatory_impact * 0.3) * 0.6
         
-        # Determine risk category (target variable)
-        if risk_score >= 0.8:
-            risk_category = 'Very High'
-        elif risk_score >= 0.6:
-            risk_category = 'High'
-        elif risk_score >= 0.4:
-            risk_category = 'Medium'
-        elif risk_score >= 0.2:
-            risk_category = 'Low'
+        # Technical factors (25%): CIA triad
+        technical_component = (confidentiality * 0.33 + integrity * 0.33 + availability * 0.34) * 0.25
+        
+        # Data sensitivity (15%): Standalone critical factor
+        data_component = data_sensitivity * 0.15
+        
+        # Primary score calculation
+        weighted_score = business_component + technical_component + data_component
+        
+        # Method 2: Simple Average (Secondary for validation)
+        simple_average = (business_criticality + data_sensitivity + operational_dependency + 
+                         regulatory_impact + confidentiality + integrity + availability) / 7
+        
+        # Combine both methods with slight preference for weighted approach
+        # This ensures more nuanced scoring while maintaining interpretability
+        final_score = min(max(weighted_score * 0.8 + simple_average * 0.2, 0.0), 1.0)
+        
+        # Determine government classification levels (matching new system)
+        if final_score <= 0.25:
+            risk_category = "Public"
+        elif final_score <= 0.50:
+            risk_category = "Official"
+        elif final_score <= 0.75:
+            risk_category = "Confidential"
         else:
-            risk_category = 'Very Low'
+            risk_category = "Restricted"
         
         return {
-            # Input features
-            'asset_category': asset_category,
-            'business_context': business_context,
-            'asset_value': asset_value,
-            'compliance_framework': compliance,
+            # 7 core parameters for ML training
+            'business_criticality': round(business_criticality, 3),
+            'data_sensitivity': round(data_sensitivity, 3),
+            'operational_dependency': round(operational_dependency, 3),
+            'regulatory_impact': round(regulatory_impact, 3),
             'confidentiality': round(confidentiality, 3),
             'integrity': round(integrity, 3),
             'availability': round(availability, 3),
             
-            # Derived features  
-            'cia_average': round(cia_average, 3),
-            'cia_max': round(cia_max, 3),
-            'cia_variance': round(cia_variance, 4),
-            'value_impact': value_impact,
-            'context_multiplier': context_multiplier,
-            'compliance_factor': compliance_factor,
-            'risk_score': round(risk_score, 3),
+            # Target variable (government classification)
+            'risk_category': risk_category,
             
-            # Target variable
-            'risk_category': risk_category
+            # Metadata for context
+            'asset_category': asset_category,
+            'business_context': business_context,
+            'compliance_framework': compliance,
+            'final_score': round(final_score, 3),
+            'context_multiplier': context_multiplier,
+            'compliance_factor': compliance_factor
         }
     
     def generate_training_dataset(self) -> pd.DataFrame:
-        """Generate complete ML training dataset"""
+        """Generate complete ML training dataset with 7-parameter approach"""
         
-        print(f"Generating {self.total_samples} ML training records...")
+        print(f"Generating {self.total_samples} ML training records with 7-parameter approach...")
         
         records = []
         
@@ -190,21 +258,15 @@ class MLTrainingDatasetGenerator:
             )
             
             business_context = random.choice(list(self.business_contexts.keys()))
-            
-            asset_value = np.random.choice(
-                list(self.asset_values.keys()),
-                p=[v['weight'] for v in self.asset_values.values()]
-            )
-            
             compliance = random.choice(self.compliance_frameworks)
             
             # Generate asset name
             asset_examples = self.asset_categories[asset_category]['examples']
             asset_name = f"{business_context} {random.choice(asset_examples)} {i+1:04d}"
             
-            # Generate ML features
-            features = self.generate_ml_features(
-                asset_category, business_context, asset_value, compliance
+            # Generate 7-parameter ML features
+            features = self.generate_7_parameter_features(
+                asset_category, business_context, compliance
             )
             
             # Add metadata
@@ -219,18 +281,33 @@ class MLTrainingDatasetGenerator:
         
         df = pd.DataFrame(records)
         
-        # Reorder columns for ML workflow
+        # Reorder columns for ML workflow (7 parameters + target + metadata)
         feature_columns = [
-            'asset_id', 'asset_name', 'asset_category', 'business_context', 
-            'asset_value', 'compliance_framework', 'confidentiality', 'integrity', 
-            'availability', 'cia_average', 'cia_max', 'cia_variance', 
-            'value_impact', 'context_multiplier', 'compliance_factor', 
-            'risk_score', 'risk_category'
+            'asset_id', 'asset_name', 'asset_category', 'business_context', 'compliance_framework',
+            'business_criticality', 'data_sensitivity', 'operational_dependency', 'regulatory_impact',
+            'confidentiality', 'integrity', 'availability', 'risk_category',
+            'final_score', 'context_multiplier', 'compliance_factor'
         ]
         
         df = df[feature_columns]
         
-        print(f"✅ Generated {len(df)} ML training records")
+        print(f"✅ Generated {len(df)} ML training records with 7-parameter approach")
+        
+        # Validate class distribution
+        class_distribution = df['risk_category'].value_counts().sort_index()
+        print(f"\n📊 Class Distribution:")
+        for category, count in class_distribution.items():
+            percentage = (count / len(df)) * 100
+            print(f"   {category}: {count} records ({percentage:.1f}%)")
+        
+        # Check if we have all 4 classes
+        expected_classes = ['Public', 'Official', 'Confidential', 'Restricted']
+        missing_classes = set(expected_classes) - set(class_distribution.index)
+        if missing_classes:
+            print(f"⚠️  Warning: Missing classes: {missing_classes}")
+        else:
+            print(f"✅ All 4 classification levels represented")
+        
         return df
     
     def create_train_test_split(self, df: pd.DataFrame, test_size: float = 0.2) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -270,12 +347,12 @@ class MLTrainingDatasetGenerator:
             },
             'feature_info': {
                 'input_features': [
-                    'asset_category', 'business_context', 'asset_value', 
-                    'compliance_framework', 'confidentiality', 'integrity', 'availability'
+                    'asset_category', 'business_context', 'compliance_framework',
+                    'business_criticality', 'data_sensitivity', 'operational_dependency', 'regulatory_impact'
                 ],
                 'derived_features': [
-                    'cia_average', 'cia_max', 'cia_variance', 'value_impact', 
-                    'context_multiplier', 'compliance_factor', 'risk_score'
+                    'confidentiality', 'integrity', 'availability', 'final_score',
+                    'context_multiplier', 'compliance_factor'
                 ],
                 'target_variable': 'risk_category',
                 'feature_count': len(combined_df.columns) - 2,  # Exclude asset_id, asset_name
@@ -284,7 +361,6 @@ class MLTrainingDatasetGenerator:
             'data_distribution': {
                 'asset_categories': combined_df['asset_category'].value_counts().to_dict(),
                 'business_contexts': combined_df['business_context'].value_counts().to_dict(),
-                'asset_values': combined_df['asset_value'].value_counts().to_dict(),
                 'risk_categories': combined_df['risk_category'].value_counts().to_dict()
             },
             'statistics': {
@@ -311,7 +387,7 @@ class MLTrainingDatasetGenerator:
                 'training': 'Use training_dataset.csv to train ML models',
                 'testing': 'Use testing_dataset.csv to evaluate model performance',
                 'upload': 'Upload either dataset via frontend for model training',
-                'features': 'Use columns: asset_category through risk_score for training',
+                'features': 'Use columns: asset_category through final_score for training',
                 'target': 'Use risk_category as target variable for classification'
             }
         }

@@ -10,17 +10,11 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
-class AssetValueMapping(TimeStampedModel):
-    qualitative_value = models.CharField(max_length=20, unique=True)
-    crisp_value = models.FloatField()
-
-    def __str__(self):
-        return self.qualitative_value
-    
 class Department(TimeStampedModel):
     name = models.CharField(max_length=255)
-    asset_value_mapping = models.ForeignKey(AssetValueMapping, on_delete=models.CASCADE)
     reason = models.TextField()
+    
+
     
     # Standards-compliant additions
     risk_appetite = models.CharField(
@@ -47,6 +41,8 @@ class Department(TimeStampedModel):
         help_text='ISO 27001 compliance maturity level'
     )
 
+
+
     def __str__(self):
         return self.name
 
@@ -69,9 +65,7 @@ class AssetListing(TimeStampedModel):
     description = models.TextField(null=True, blank=True) 
     asset_type = models.CharField(max_length=255)
     owner_department = models.ForeignKey(Department, on_delete=models.CASCADE)
-    asset_value = models.ForeignKey(AssetValueMapping, on_delete=models.CASCADE)
     
-    # NIST CSF Asset Categorization (Standards-compliant)
     asset_category = models.CharField(
         max_length=50, 
         choices=[
@@ -86,7 +80,6 @@ class AssetListing(TimeStampedModel):
         help_text='NIST Cybersecurity Framework asset category'
     )
     
-    # Industry and Regulatory Context
     industry_sector = models.CharField(
         max_length=100, 
         choices=[
@@ -123,17 +116,32 @@ class AssetListing(TimeStampedModel):
         help_text='Primary regulatory/compliance framework'
     )
     
-    # Phase 1: Asset Classification Results (NIST SP 800-60 compliant)
+    business_criticality = models.FloatField(
+        null=True,
+        blank=True,
+        help_text='Business criticality level (0-1 scale): How critical is this asset to core business operations'
+    )
+    regulatory_impact = models.FloatField(
+        null=True,
+        blank=True,
+        help_text='Regulatory impact level (0-1 scale): Level of regulatory oversight for this specific asset'
+    )
+    operational_dependency = models.FloatField(
+        null=True,
+        blank=True,
+        help_text='Operational dependency level (0-1 scale): How much other systems/processes depend on this asset'
+    )
+    data_sensitivity = models.FloatField(
+        null=True,
+        blank=True,
+        help_text='Data sensitivity level (0-1 scale): Sensitivity of data handled/stored by this asset'
+    )
+    
     classification = models.CharField(
         max_length=255, 
-        choices=[
-            ('Low', 'Low Impact'),
-            ('Moderate', 'Moderate Impact'),  # NIST standard term
-            ('High', 'High Impact')
-        ],
         null=True, 
         blank=True,
-        help_text='NIST SP 800-60 information impact level'
+        help_text='NIST SP 800-60 information impact level with value (e.g., "High (0.85)")'
     )
     classification_value = models.FloatField(
         null=True, 
@@ -141,7 +149,6 @@ class AssetListing(TimeStampedModel):
         help_text='Quantitative classification score (0-1 scale)'
     )
     
-    # Phase 2: Risk Identification Results (CIA Triad - NIST SP 800-60)
     confidentiality = models.FloatField(
         null=True, 
         blank=True,
@@ -163,7 +170,6 @@ class AssetListing(TimeStampedModel):
         help_text='Probability component from fuzzy logic (0-1 scale)'
     )
     
-    # ISO 27005 Risk Assessment Components
     likelihood = models.FloatField(
         null=True, 
         blank=True,
@@ -185,7 +191,6 @@ class AssetListing(TimeStampedModel):
         help_text='Industry-specific risk factor'
     )
     
-    # Phase 3: Mathematical Risk Analysis Results (ISO 27005)
     calculated_risk_level = models.FloatField(
         null=True, 
         blank=True,
@@ -210,42 +215,62 @@ class AssetListing(TimeStampedModel):
         help_text='ISO 27005 risk category based on calculated risk level'
     )
     
-    # Phase 4: Model Comparison Results (Research methodology)
     traditional_fuzzy_prediction = models.CharField(
         max_length=20, 
         choices=[
-            ('Low', 'Low'),
-            ('Moderate', 'Moderate'),
-            ('High', 'High')
+            ('Public', 'Public'),
+            ('Official', 'Official'),
+            ('Confidential', 'Confidential'),
+            ('Restricted', 'Restricted')
         ],
         null=True, 
         blank=True,
-        help_text='Traditional fuzzy logic classification prediction'
+        help_text='Traditional fuzzy logic classification prediction (Government Classification)'
     )
     modern_svm_prediction = models.CharField(
         max_length=20, 
         choices=[
-            ('Low', 'Low'),
-            ('Moderate', 'Moderate'),
-            ('High', 'High')
+            ('Public', 'Public'),
+            ('Official', 'Official'),
+            ('Confidential', 'Confidential'),
+            ('Restricted', 'Restricted')
         ],
         null=True, 
         blank=True,
-        help_text='Modern SVM classification prediction'
+        help_text='Modern SVM classification prediction (Government Classification)'
     )
     modern_dt_prediction = models.CharField(
         max_length=20, 
         choices=[
-            ('Low', 'Low'),
-            ('Moderate', 'Moderate'),
-            ('High', 'High')
+            ('Public', 'Public'),
+            ('Official', 'Official'),
+            ('Confidential', 'Confidential'),
+            ('Restricted', 'Restricted')
         ],
         null=True, 
         blank=True,
-        help_text='Modern Decision Tree classification prediction'
+        help_text='Modern Decision Tree classification prediction (Government Classification)'
     )
     
-    # Standards and Methodology Tracking
+
+    
+    # Model classification scores
+    traditional_fuzzy_score = models.FloatField(
+        null=True, 
+        blank=True,
+        help_text='Classification score for traditional fuzzy logic prediction (0-1 scale)'
+    )
+    modern_svm_score = models.FloatField(
+        null=True, 
+        blank=True,
+        help_text='Classification score for modern SVM prediction (0-1 scale)'
+    )
+    modern_dt_score = models.FloatField(
+        null=True, 
+        blank=True,
+        help_text='Classification score for modern Decision Tree prediction (0-1 scale)'
+    )
+    
     standards_version = models.CharField(
         max_length=100, 
         default='NIST_CSF_1.1_ISO27001_2013_ISO27005_2018',
@@ -257,12 +282,10 @@ class AssetListing(TimeStampedModel):
         help_text='Risk assessment methodology used'
     )
     
-    # Existing ML model predictions (keep for backward compatibility)
     dt_predicted_risk_level = models.CharField(max_length=10, null=True, blank=True)
     rf_predicted_risk_level = models.CharField(max_length=10, null=True, blank=True)
     ensemble_predicted_risk_level = models.CharField(max_length=10, null=True, blank=True)
     
-    # Risk treatment and metadata
     risk_treatment = models.TextField(
         null=True, 
         blank=True,
@@ -271,7 +294,6 @@ class AssetListing(TimeStampedModel):
     comparison_performed_date = models.DateTimeField(null=True, blank=True)
     last_analysis_date = models.DateTimeField(null=True, blank=True)
     
-    # NIST CSF Function tracking
     nist_function = models.CharField(
         max_length=20,
         choices=[
@@ -378,7 +400,6 @@ class AssessmentQuestion(TimeStampedModel):
         return self.question_text
     
 
-# Model to store classification report metrics
 class ClassificationReport(TimeStampedModel):
     model_name = models.CharField(max_length=255)
     precision = models.FloatField()
@@ -386,7 +407,6 @@ class ClassificationReport(TimeStampedModel):
     f1_score = models.FloatField()
     support = models.IntegerField()
     
-    # Standards compliance tracking
     standards_baseline = models.CharField(
         max_length=100,
         help_text='Standards benchmark used for comparison',
@@ -398,7 +418,6 @@ class ClassificationReport(TimeStampedModel):
         return f"{self.model_name} - Precision: {self.precision}, Recall: {self.recall}"
 
 
-# Model to store confusion matrix results
 class ConfusionMatrix(TimeStampedModel):
     model_name = models.CharField(max_length=255)
     true_label = models.CharField(max_length=255)
@@ -409,37 +428,28 @@ class ConfusionMatrix(TimeStampedModel):
         return f"{self.model_name} - True: {self.true_label}, Predicted: {self.predicted_label}, Count: {self.count}"
 
 
-# Model to store comprehensive model comparison results
 class ModelComparison(TimeStampedModel):
     asset = models.ForeignKey(AssetListing, on_delete=models.CASCADE, related_name='comparisons')
     experiment_name = models.CharField(max_length=100, default='Standard Comparison')
     
-    # Input features used for comparison
     input_confidentiality = models.FloatField()
     input_integrity = models.FloatField()
     input_availability = models.FloatField()
     input_asset_classification = models.FloatField()
     
-    # Model predictions for the same task
-    fuzzy_prediction = models.CharField(max_length=20)  # Traditional approach
-    svm_prediction = models.CharField(max_length=20)    # Modern approach 1
-    dt_prediction = models.CharField(max_length=20)     # Modern approach 2
+    fuzzy_prediction = models.CharField(max_length=20)
+    svm_prediction = models.CharField(max_length=20)
+    dt_prediction = models.CharField(max_length=20)
     
-    # Confidence scores if available
-    fuzzy_confidence = models.FloatField(null=True, blank=True)
-    svm_confidence = models.FloatField(null=True, blank=True)
-    dt_confidence = models.FloatField(null=True, blank=True)
+
     
-    # Ground truth for validation
     expert_label = models.CharField(max_length=20, null=True, blank=True)
     
-    # Standards compliance
     standards_compliant = models.BooleanField(
         default=True,
         help_text='Whether this comparison follows established standards'
     )
     
-    # Comparison metadata
     comparison_date = models.DateTimeField(auto_now_add=True)
     comparison_version = models.CharField(max_length=50, default='2.0_Standards_Compliant')
     
@@ -447,16 +457,13 @@ class ModelComparison(TimeStampedModel):
         return f"Comparison for {self.asset.asset} - {self.comparison_date}"
 
 
-# Model to store overall performance metrics for thesis results
 class ModelPerformanceComparison(TimeStampedModel):
     experiment_name = models.CharField(max_length=100)
     test_date = models.DateTimeField(auto_now_add=True)
     
-    # Dataset information
     total_test_cases = models.IntegerField()
     dataset_name = models.CharField(max_length=100, default='Standards_Compliant_Dataset')
     
-    # Standards compliance metadata
     standards_followed = models.JSONField(
         default=list,
         help_text='List of cybersecurity standards followed'
@@ -466,25 +473,21 @@ class ModelPerformanceComparison(TimeStampedModel):
         default='2.0_Standards_Compliant'
     )
     
-    # Traditional Fuzzy Logic Performance
     fuzzy_accuracy = models.FloatField()
     fuzzy_precision = models.FloatField()
     fuzzy_recall = models.FloatField()
     fuzzy_f1_score = models.FloatField()
     
-    # Modern SVM Performance
     svm_accuracy = models.FloatField()
     svm_precision = models.FloatField()
     svm_recall = models.FloatField()
     svm_f1_score = models.FloatField()
     
-    # Modern Decision Tree Performance
     dt_accuracy = models.FloatField()
     dt_precision = models.FloatField()
     dt_recall = models.FloatField()
     dt_f1_score = models.FloatField()
     
-    # Statistical analysis
     statistical_significance_p_value = models.FloatField(null=True, blank=True)
     best_performing_model = models.CharField(max_length=50)
     

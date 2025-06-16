@@ -2,7 +2,6 @@
 Django management command to seed comprehensive asset management data
 
 This command creates extensive data for the asset classification system:
-- AssetValueMapping records (5 levels)
 - Department records (comprehensive business departments)
 - AssetType records (comprehensive IT and business asset types)
 - Sample asset records (diverse examples)
@@ -13,7 +12,7 @@ Usage: python manage.py seed_basic_data
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from assets_management.models import (
-    AssetValueMapping, Department, AssetType, AssetListing
+    Department, AssetType, AssetListing
 )
 import uuid
 
@@ -38,16 +37,12 @@ class Command(BaseCommand):
             self.stdout.write('🗑️  Clearing existing data...')
             AssetListing.objects.all().delete()
             Department.objects.all().delete()
-            AssetValueMapping.objects.all().delete()
             AssetType.objects.all().delete()
             self.stdout.write(
                 self.style.WARNING('Existing data cleared')
             )
 
         with transaction.atomic():
-            # Seed Asset Value Mappings
-            self.seed_asset_value_mappings()
-            
             # Seed Comprehensive Departments
             self.seed_comprehensive_departments()
             
@@ -61,65 +56,36 @@ class Command(BaseCommand):
             self.style.SUCCESS('✅ Comprehensive data seeding completed successfully!')
         )
 
-    def seed_asset_value_mappings(self):
-        """Create comprehensive asset value mappings"""
-        self.stdout.write('📊 Seeding asset value mappings...')
-        
-        mappings = [
-            ('Very Low', 0.2),
-            ('Low', 0.4),
-            ('Medium', 0.6),
-            ('High', 0.8),
-            ('Very High', 1.0),
-        ]
-        
-        for qualitative_value, crisp_value in mappings:
-            mapping, created = AssetValueMapping.objects.get_or_create(
-                qualitative_value=qualitative_value,
-                defaults={'crisp_value': crisp_value}
-            )
-            if created:
-                self.stdout.write(f'  ✅ Created: {qualitative_value} ({crisp_value})')
-            else:
-                self.stdout.write(f'  ⚠️  Exists: {qualitative_value}')
+
 
     def seed_comprehensive_departments(self):
         """Create comprehensive department records covering all business areas"""
         self.stdout.write('🏢 Seeding comprehensive departments...')
         
-        # Get asset value mappings
-        very_low_value = AssetValueMapping.objects.get(qualitative_value='Very Low')
-        low_value = AssetValueMapping.objects.get(qualitative_value='Low')
-        medium_value = AssetValueMapping.objects.get(qualitative_value='Medium')
-        high_value = AssetValueMapping.objects.get(qualitative_value='High')
-        very_high_value = AssetValueMapping.objects.get(qualitative_value='Very High')
+        # Department seeding without asset value mappings
         
         departments = [
             # Core IT and Technology
             {
                 'name': 'Information Technology',
-                'asset_value_mapping': very_high_value,
                 'reason': 'Manages critical IT infrastructure, systems, and cybersecurity',
                 'risk_appetite': 'Very Low',
                 'compliance_level': 'Very High'
             },
             {
                 'name': 'Cybersecurity',
-                'asset_value_mapping': very_high_value,
                 'reason': 'Responsible for information security and threat management',
                 'risk_appetite': 'Very Low',
                 'compliance_level': 'Very High'
             },
             {
                 'name': 'Data Management',
-                'asset_value_mapping': very_high_value,
                 'reason': 'Manages data governance, databases, and data analytics',
                 'risk_appetite': 'Very Low',
                 'compliance_level': 'Very High'
             },
             {
                 'name': 'Network Operations',
-                'asset_value_mapping': high_value,
                 'reason': 'Maintains network infrastructure and telecommunications',
                 'risk_appetite': 'Low',
                 'compliance_level': 'High'
@@ -128,28 +94,24 @@ class Command(BaseCommand):
             # Financial and Compliance
             {
                 'name': 'Finance',
-                'asset_value_mapping': very_high_value,
                 'reason': 'Handles financial data, transactions, and reporting',
                 'risk_appetite': 'Very Low',
                 'compliance_level': 'Very High'
             },
             {
                 'name': 'Accounting',
-                'asset_value_mapping': high_value,
                 'reason': 'Manages financial records and accounting systems',
                 'risk_appetite': 'Very Low',
                 'compliance_level': 'Very High'
             },
             {
                 'name': 'Compliance & Risk',
-                'asset_value_mapping': very_high_value,
                 'reason': 'Ensures regulatory compliance and risk management',
                 'risk_appetite': 'Very Low',
                 'compliance_level': 'Very High'
             },
             {
                 'name': 'Legal',
-                'asset_value_mapping': high_value,
                 'reason': 'Manages legal documents and regulatory affairs',
                 'risk_appetite': 'Very Low',
                 'compliance_level': 'Very High'
@@ -158,21 +120,18 @@ class Command(BaseCommand):
             # Human Resources and Administration
             {
                 'name': 'Human Resources',
-                'asset_value_mapping': high_value,
                 'reason': 'Manages employee information, records, and HR systems',
                 'risk_appetite': 'Low',
                 'compliance_level': 'High'
             },
             {
                 'name': 'Administration',
-                'asset_value_mapping': medium_value,
                 'reason': 'Handles administrative functions and office management',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'Medium'
             },
             {
                 'name': 'Facilities Management',
-                'asset_value_mapping': medium_value,
                 'reason': 'Manages physical facilities and building systems',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'Medium'
@@ -181,21 +140,18 @@ class Command(BaseCommand):
             # Operations and Business
             {
                 'name': 'Operations',
-                'asset_value_mapping': high_value,
                 'reason': 'Oversees daily business operations and processes',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'High'
             },
             {
                 'name': 'Business Intelligence',
-                'asset_value_mapping': high_value,
                 'reason': 'Manages business analytics and reporting systems',
                 'risk_appetite': 'Low',
                 'compliance_level': 'High'
             },
             {
                 'name': 'Quality Assurance',
-                'asset_value_mapping': medium_value,
                 'reason': 'Ensures quality standards and testing procedures',
                 'risk_appetite': 'Low',
                 'compliance_level': 'High'
@@ -204,28 +160,24 @@ class Command(BaseCommand):
             # Customer and Sales
             {
                 'name': 'Sales',
-                'asset_value_mapping': medium_value,
                 'reason': 'Manages sales processes and customer acquisition',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'Medium'
             },
             {
                 'name': 'Marketing',
-                'asset_value_mapping': medium_value,
                 'reason': 'Handles marketing campaigns and brand management',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'Medium'
             },
             {
                 'name': 'Customer Service',
-                'asset_value_mapping': medium_value,
                 'reason': 'Manages customer support and service systems',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'Medium'
             },
             {
                 'name': 'Customer Relations',
-                'asset_value_mapping': medium_value,
                 'reason': 'Maintains customer relationships and communications',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'Medium'
@@ -234,22 +186,19 @@ class Command(BaseCommand):
             # Development and Innovation
             {
                 'name': 'Research & Development',
-                'asset_value_mapping': high_value,
                 'reason': 'Develops new products and innovative solutions',
                 'risk_appetite': 'High',
                 'compliance_level': 'Medium'
             },
             {
                 'name': 'Product Development',
-                'asset_value_mapping': high_value,
                 'reason': 'Manages product lifecycle and development processes',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'Medium'
             },
             {
-                'name': 'Software Development',
-                'asset_value_mapping': high_value,
-                'reason': 'Develops and maintains software applications',
+                'name': 'Engineering',
+                'reason': 'Technical engineering and system design',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'High'
             },
@@ -257,21 +206,18 @@ class Command(BaseCommand):
             # Supply Chain and Procurement
             {
                 'name': 'Procurement',
-                'asset_value_mapping': medium_value,
-                'reason': 'Manages purchasing and vendor relationships',
+                'reason': 'Manages purchasing and supplier relationships',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'Medium'
             },
             {
                 'name': 'Supply Chain',
-                'asset_value_mapping': medium_value,
                 'reason': 'Oversees supply chain and logistics operations',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'Medium'
             },
             {
                 'name': 'Vendor Management',
-                'asset_value_mapping': medium_value,
                 'reason': 'Manages third-party vendors and contractors',
                 'risk_appetite': 'Medium',
                 'compliance_level': 'High'
@@ -279,14 +225,18 @@ class Command(BaseCommand):
         ]
         
         for dept_data in departments:
-            dept, created = Department.objects.get_or_create(
+            department, created = Department.objects.get_or_create(
                 name=dept_data['name'],
-                defaults=dept_data
+                defaults={
+                    'reason': dept_data['reason'],
+                    'risk_appetite': dept_data['risk_appetite'],
+                    'compliance_level': dept_data['compliance_level']
+                }
             )
             if created:
-                self.stdout.write(f'  ✅ Created: {dept_data["name"]}')
-            else:
-                self.stdout.write(f'  ⚠️  Exists: {dept_data["name"]}')
+                self.stdout.write(
+                    self.style.SUCCESS(f'Created department: {department.name}')
+                )
 
     def seed_comprehensive_asset_types(self):
         """Create comprehensive asset type records covering all IT and business assets"""
@@ -386,6 +336,13 @@ class Command(BaseCommand):
             ('Business Plans', 'Strategic plans and business documentation'),
             ('Technical Documentation', 'System documentation and procedures'),
             ('Compliance Records', 'Regulatory and compliance documentation'),
+            
+            # Additional Asset Types for Enhanced Testing
+            ('Test Database', 'Non-production databases used for testing and development'),
+            ('Payment System', 'Systems that process financial transactions and payments'),
+            ('Office Equipment', 'Standard office hardware like printers, copiers, and peripherals'),
+            ('Backup System', 'Data backup and disaster recovery systems'),
+            ('Documentation System', 'Knowledge bases, wikis, and documentation platforms'),
         ]
         
         for name, description in asset_types:
@@ -399,37 +356,39 @@ class Command(BaseCommand):
                 self.stdout.write(f'  ⚠️  Exists: {name}')
 
     def seed_sample_assets(self):
-        """Create diverse sample asset records"""
+        """Seed sample assets with diverse parameters for thesis research"""
         self.stdout.write('🏗️  Seeding sample assets...')
         
-        # Get required objects
+        # Get departments
         it_dept = Department.objects.get(name='Information Technology')
         finance_dept = Department.objects.get(name='Finance')
         hr_dept = Department.objects.get(name='Human Resources')
         security_dept = Department.objects.get(name='Cybersecurity')
-        data_dept = Department.objects.get(name='Data Management')
         
-        very_high_value = AssetValueMapping.objects.get(qualitative_value='Very High')
-        high_value = AssetValueMapping.objects.get(qualitative_value='High')
-        medium_value = AssetValueMapping.objects.get(qualitative_value='Medium')
-        
+        # Clean asset data without pre-set classification fields
         sample_assets = [
             {
                 'asset': 'Production Database Server',
-                'description': 'Main production database containing customer and business data',
+                'description': 'Primary production database server hosting critical business data',
                 'asset_type': 'Production Database',
-                'owner_department': data_dept,
-                'asset_value': very_high_value,
-                'asset_category': 'Systems',
+                'owner_department': it_dept,
+                'asset_category': 'Data',
                 'industry_sector': 'Technology',
                 'compliance_framework': 'ISO 27001',
                 'nist_function': 'Protect',
-                'classification': 'High',
+                # Input parameters for classification algorithm
+                'business_criticality': 0.9,
+                'regulatory_impact': 0.8,
+                'operational_dependency': 0.85,
+                'data_sensitivity': 0.95,
+                # CIA triad for risk assessment
                 'confidentiality': 0.9,
                 'integrity': 0.95,
                 'availability': 0.9,
+                # Standards compliance
                 'standards_version': 'NIST_CSF_1.1_ISO27001_2013_ISO27005_2018',
                 'methodology': 'Standards_Compliant_Risk_Assessment',
+                # Risk assessment parameters
                 'likelihood': 0.3,
                 'consequence': 0.9,
                 'compliance_factor': 1.2,
@@ -442,12 +401,14 @@ class Command(BaseCommand):
                 'description': 'Database containing customer personal information and transaction history',
                 'asset_type': 'Customer Data',
                 'owner_department': finance_dept,
-                'asset_value': very_high_value,
                 'asset_category': 'Data',
                 'industry_sector': 'Financial Services',
                 'compliance_framework': 'GDPR',
                 'nist_function': 'Protect',
-                'classification': 'High',
+                'business_criticality': 0.95,
+                'regulatory_impact': 0.9,
+                'operational_dependency': 0.8,
+                'data_sensitivity': 0.95,
                 'confidentiality': 0.95,
                 'integrity': 0.9,
                 'availability': 0.8,
@@ -465,12 +426,14 @@ class Command(BaseCommand):
                 'description': 'HR system containing employee personal and employment information',
                 'asset_type': 'HR System',
                 'owner_department': hr_dept,
-                'asset_value': high_value,
                 'asset_category': 'Applications',
                 'industry_sector': 'Technology',
                 'compliance_framework': 'HIPAA',
                 'nist_function': 'Protect',
-                'classification': 'Moderate',
+                'business_criticality': 0.7,
+                'regulatory_impact': 0.8,
+                'operational_dependency': 0.6,
+                'data_sensitivity': 0.85,
                 'confidentiality': 0.8,
                 'integrity': 0.85,
                 'availability': 0.7,
@@ -488,12 +451,14 @@ class Command(BaseCommand):
                 'description': 'Main web server hosting customer-facing applications',
                 'asset_type': 'Web Server',
                 'owner_department': it_dept,
-                'asset_value': high_value,
                 'asset_category': 'Systems',
                 'industry_sector': 'Technology',
                 'compliance_framework': 'NIST CSF',
                 'nist_function': 'Detect',
-                'classification': 'High',
+                'business_criticality': 0.8,
+                'regulatory_impact': 0.6,
+                'operational_dependency': 0.9,
+                'data_sensitivity': 0.7,
                 'confidentiality': 0.7,
                 'integrity': 0.8,
                 'availability': 0.95,
@@ -511,12 +476,14 @@ class Command(BaseCommand):
                 'description': 'Network security firewall protecting internal systems',
                 'asset_type': 'Firewall',
                 'owner_department': security_dept,
-                'asset_value': very_high_value,
                 'asset_category': 'Networks',
                 'industry_sector': 'Technology',
                 'compliance_framework': 'ISO 27001',
                 'nist_function': 'Protect',
-                'classification': 'High',
+                'business_criticality': 0.9,
+                'regulatory_impact': 0.8,
+                'operational_dependency': 0.95,
+                'data_sensitivity': 0.6,
                 'confidentiality': 0.6,
                 'integrity': 0.9,
                 'availability': 0.95,
@@ -534,12 +501,14 @@ class Command(BaseCommand):
                 'description': 'Corporate email system for internal and external communications',
                 'asset_type': 'Mail Server',
                 'owner_department': it_dept,
-                'asset_value': medium_value,
                 'asset_category': 'Services',
                 'industry_sector': 'Technology',
                 'compliance_framework': 'ISO 27001',
                 'nist_function': 'Protect',
-                'classification': 'Moderate',
+                'business_criticality': 0.6,
+                'regulatory_impact': 0.5,
+                'operational_dependency': 0.8,
+                'data_sensitivity': 0.7,
                 'confidentiality': 0.75,
                 'integrity': 0.8,
                 'availability': 0.85,
@@ -551,6 +520,156 @@ class Command(BaseCommand):
                 'industry_factor': 1.0,
                 'calculated_risk_level': 0.25,
                 'mathematical_risk_category': 'Medium Risk',
+            },
+            {
+                'asset': 'Development Test Database',
+                'description': 'Non-production test database with sanitized data',
+                'asset_type': 'Test Database',
+                'owner_department': it_dept,
+                'asset_category': 'Systems',
+                'industry_sector': 'Technology',
+                'compliance_framework': 'None',
+                'nist_function': 'Identify',
+                'business_criticality': 0.2,
+                'regulatory_impact': 0.1,
+                'operational_dependency': 0.3,
+                'data_sensitivity': 0.2,
+                'confidentiality': 0.3,
+                'integrity': 0.4,
+                'availability': 0.3,
+                'standards_version': 'NIST_CSF_1.1_ISO27001_2013_ISO27005_2018',
+                'methodology': 'Standards_Compliant_Risk_Assessment',
+                'likelihood': 0.1,
+                'consequence': 0.2,
+                'compliance_factor': 0.8,
+                'industry_factor': 0.9,
+                'calculated_risk_level': 0.07,
+                'mathematical_risk_category': 'Low Risk',
+            },
+            {
+                'asset': 'Financial Reporting System',
+                'description': 'Critical system for generating financial reports and statements',
+                'asset_type': 'Financial System',
+                'owner_department': finance_dept,
+                'asset_category': 'Applications',
+                'industry_sector': 'Financial Services',
+                'compliance_framework': 'SOX',
+                'nist_function': 'Protect',
+                'business_criticality': 0.95,
+                'regulatory_impact': 0.95,
+                'operational_dependency': 0.9,
+                'data_sensitivity': 0.9,
+                'confidentiality': 0.9,
+                'integrity': 0.95,
+                'availability': 0.9,
+                'standards_version': 'NIST_CSF_1.1_ISO27001_2013_ISO27005_2018',
+                'methodology': 'Standards_Compliant_Risk_Assessment',
+                'likelihood': 0.2,
+                'consequence': 0.95,
+                'compliance_factor': 1.4,
+                'industry_factor': 1.3,
+                'calculated_risk_level': 0.35,
+                'mathematical_risk_category': 'Medium Risk',
+            },
+            {
+                'asset': 'Office Printer Network',
+                'description': 'Standard office printers and printing services',
+                'asset_type': 'Office Equipment',
+                'owner_department': it_dept,
+                'asset_category': 'Hardware',
+                'industry_sector': 'Technology',
+                'compliance_framework': 'None',
+                'nist_function': 'Identify',
+                'business_criticality': 0.3,
+                'regulatory_impact': 0.2,
+                'operational_dependency': 0.4,
+                'data_sensitivity': 0.3,
+                'confidentiality': 0.4,
+                'integrity': 0.3,
+                'availability': 0.5,
+                'standards_version': 'NIST_CSF_1.1_ISO27001_2013_ISO27005_2018',
+                'methodology': 'Standards_Compliant_Risk_Assessment',
+                'likelihood': 0.2,
+                'consequence': 0.3,
+                'compliance_factor': 0.9,
+                'industry_factor': 0.8,
+                'calculated_risk_level': 0.04,
+                'mathematical_risk_category': 'Low Risk',
+            },
+            {
+                'asset': 'Backup Storage System',
+                'description': 'Centralized backup and disaster recovery storage',
+                'asset_type': 'Backup System',
+                'owner_department': it_dept,
+                'asset_category': 'Infrastructure',
+                'industry_sector': 'Technology',
+                'compliance_framework': 'ISO 27001',
+                'nist_function': 'Recover',
+                'business_criticality': 0.75,
+                'regulatory_impact': 0.7,
+                'operational_dependency': 0.8,
+                'data_sensitivity': 0.85,
+                'confidentiality': 0.8,
+                'integrity': 0.9,
+                'availability': 0.7,
+                'standards_version': 'NIST_CSF_1.1_ISO27001_2013_ISO27005_2018',
+                'methodology': 'Standards_Compliant_Risk_Assessment',
+                'likelihood': 0.3,
+                'consequence': 0.8,
+                'compliance_factor': 1.1,
+                'industry_factor': 1.0,
+                'calculated_risk_level': 0.26,
+                'mathematical_risk_category': 'Medium Risk',
+            },
+            {
+                'asset': 'Payment Processing Gateway',
+                'description': 'Critical payment processing system for customer transactions',
+                'asset_type': 'Payment System',
+                'owner_department': finance_dept,
+                'asset_category': 'Applications',
+                'industry_sector': 'Financial Services',
+                'compliance_framework': 'PCI DSS',
+                'nist_function': 'Protect',
+                'business_criticality': 0.98,
+                'regulatory_impact': 0.95,
+                'operational_dependency': 0.95,
+                'data_sensitivity': 0.98,
+                'confidentiality': 0.95,
+                'integrity': 0.98,
+                'availability': 0.95,
+                'standards_version': 'NIST_CSF_1.1_ISO27001_2013_ISO27005_2018',
+                'methodology': 'Standards_Compliant_Risk_Assessment',
+                'likelihood': 0.4,
+                'consequence': 0.98,
+                'compliance_factor': 1.5,
+                'industry_factor': 1.4,
+                'calculated_risk_level': 0.82,
+                'mathematical_risk_category': 'High Risk',
+            },
+            {
+                'asset': 'Internal Wiki System',
+                'description': 'Internal knowledge base and documentation system',
+                'asset_type': 'Documentation System',
+                'owner_department': it_dept,
+                'asset_category': 'Applications',
+                'industry_sector': 'Technology',
+                'compliance_framework': 'None',
+                'nist_function': 'Identify',
+                'business_criticality': 0.4,
+                'regulatory_impact': 0.2,
+                'operational_dependency': 0.5,
+                'data_sensitivity': 0.4,
+                'confidentiality': 0.5,
+                'integrity': 0.6,
+                'availability': 0.4,
+                'standards_version': 'NIST_CSF_1.1_ISO27001_2013_ISO27005_2018',
+                'methodology': 'Standards_Compliant_Risk_Assessment',
+                'likelihood': 0.2,
+                'consequence': 0.4,
+                'compliance_factor': 0.8,
+                'industry_factor': 0.9,
+                'calculated_risk_level': 0.06,
+                'mathematical_risk_category': 'Low Risk',
             },
         ]
         
@@ -567,7 +686,6 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(f'📊 Comprehensive data summary:')
         )
-        self.stdout.write(f'   - Asset Value Mappings: {AssetValueMapping.objects.count()}')
         self.stdout.write(f'   - Departments: {Department.objects.count()}')
         self.stdout.write(f'   - Asset Types: {AssetType.objects.count()}')
         self.stdout.write(f'   - Assets: {AssetListing.objects.count()}')

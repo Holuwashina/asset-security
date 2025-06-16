@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, Asset } from '../api';
+import { useToast } from './useToast';
 
 // Assets Hooks
 export const useAssets = () => {
@@ -8,9 +9,10 @@ export const useAssets = () => {
     queryFn: () => apiClient.getAssets(),
     select: (data: any) => data?.results ? { results: data.results, count: data.count } : data,
     retry: 0, // Don't retry
-    retryOnMount: false,
+    retryOnMount: true, // ✅ Enable refetch on mount to get fresh data
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    staleTime: 0, // ✅ Consider data immediately stale to ensure fresh data
   });
 };
 
@@ -20,28 +22,33 @@ export const useAsset = (id: string) => {
     queryFn: () => apiClient.getAsset(id),
     enabled: !!id,
     retry: 0,
-    retryOnMount: false,
+    retryOnMount: true,  // ✅ Enable refetch on mount for edit functionality
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    staleTime: 0,  // ✅ Consider data immediately stale to ensure fresh data
   });
 };
 
 export const useCreateAsset = () => {
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   
   return useMutation({
     mutationFn: (data: Partial<Asset>) => apiClient.createAsset(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
+      addToast('Asset created successfully', 'success');
     },
-    onError: (error) => {
-      // Silent error handling - no console.error
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to create asset';
+      addToast(message, 'error');
     }
   });
 };
 
 export const useUpdateAsset = () => {
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Asset> }) =>
@@ -49,9 +56,11 @@ export const useUpdateAsset = () => {
     onSuccess: (_: any, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       queryClient.invalidateQueries({ queryKey: ['asset', variables.id] });
+      addToast('Asset updated successfully', 'success');
     },
-    onError: (error) => {
-      // Silent error handling - no console.error
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to update asset';
+      addToast(message, 'error');
     }
   });
 };
@@ -64,8 +73,9 @@ export const useDeleteAsset = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
     },
-    onError: (error) => {
-      // Silent error handling - no console.error
+    onError: (error: any) => {
+      console.error('Delete asset error:', error);
+      throw error; // Re-throw to let the component handle it
     }
   });
 };
@@ -73,15 +83,18 @@ export const useDeleteAsset = () => {
 // Classification Hooks
 export const useClassifyAsset = () => {
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   
   return useMutation({
     mutationFn: (id: string) => apiClient.classifyAsset(id),
     onSuccess: (_: any, id: string) => {
       queryClient.invalidateQueries({ queryKey: ['asset', id] });
       queryClient.invalidateQueries({ queryKey: ['assets'] });
+      addToast('Asset classified successfully', 'success');
     },
-    onError: (error) => {
-      // Silent error handling - no console.error
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to classify asset';
+      addToast(message, 'error');
     }
   });
 };
@@ -92,7 +105,13 @@ export const useIdentifyRisk = () => {
   return useMutation({
     mutationFn: ({ id, data }: {
       id: string;
-      data: { confidentiality: number; integrity: number; availability: number }
+      data: { 
+        confidentiality: number; 
+        integrity: number; 
+        availability: number;
+        methodology?: string;
+        include_methodologies?: string[];
+      }
     }) => apiClient.identifyRisk(id, data),
     onSuccess: (_: any, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ['asset', variables.id] });
@@ -101,6 +120,18 @@ export const useIdentifyRisk = () => {
     onError: (error) => {
       // Silent error handling - no console.error
     }
+  });
+};
+
+export const useRiskIdentificationMethodologies = (assetId: string) => {
+  return useQuery({
+    queryKey: ['risk-methodologies', assetId],
+    queryFn: () => apiClient.getRiskIdentificationMethodologies(assetId),
+    enabled: !!assetId,
+    retry: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - methodologies don't change often
   });
 };
 
@@ -147,17 +178,17 @@ export const useDepartments = () => {
   });
 };
 
-export const useAssetValues = () => {
-  return useQuery({
-    queryKey: ['asset-values'],
-    queryFn: () => apiClient.getAssetValues(),
-    select: (data: any) => data?.results || data,
-    retry: 0,
-    retryOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
-};
+// export const useAssetValues = () => { // Removed
+//   return useQuery({
+//     queryKey: ['asset-values'],
+//     queryFn: () => apiClient.getAssetValues(),
+//     select: (data: any) => data?.results || data,
+//     retry: 0,
+//     retryOnMount: false,
+//     refetchOnWindowFocus: false,
+//     refetchOnReconnect: false,
+//   });
+// };
 
 export const useAssetTypes = () => {
   return useQuery({
@@ -317,5 +348,5 @@ export const useModelComparisons = () => {
   });
 };
 
-// Export the Asset type for use in components
+
 export type { Asset };

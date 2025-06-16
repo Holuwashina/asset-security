@@ -10,7 +10,7 @@ from rest_framework import serializers
 from .models import (
     AssetListing,
     Department,
-    AssetValueMapping,
+    # AssetValueMapping, # Removed as per migrations 0005 and 0006
     AssetType,
     Asset,
     AssessmentCategory,
@@ -28,20 +28,14 @@ class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = [
-            'id', 'name', 'asset_value_mapping', 'reason', 
+            'id', 'name', 'reason', 
             'risk_appetite', 'compliance_level',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class AssetValueMappingSerializer(serializers.ModelSerializer):
-    """Serializer for AssetValueMapping model"""
-    
-    class Meta:
-        model = AssetValueMapping
-        fields = ['id', 'qualitative_value', 'crisp_value', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+
 
 
 class AssetTypeSerializer(serializers.ModelSerializer):
@@ -66,7 +60,6 @@ class AssetListingSerializer(serializers.ModelSerializer):
     """Standards-compliant serializer for AssetListing model with all comparison fields"""
     
     owner_department_name = serializers.CharField(source='owner_department.name', read_only=True)
-    asset_value_name = serializers.CharField(source='asset_value.qualitative_value', read_only=True)
     
     # Computed fields based on standards
     nist_impact_level = serializers.SerializerMethodField()
@@ -78,11 +71,13 @@ class AssetListingSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'asset', 'description', 'asset_type',
             'owner_department', 'owner_department_name',
-            'asset_value', 'asset_value_name',
             
             # NIST CSF Asset Categorization
             'asset_category', 'industry_sector', 'compliance_framework',
             'nist_function',
+            
+            # User-Selectable Organizational Impact Factors
+            'business_criticality', 'regulatory_impact', 'operational_dependency', 'data_sensitivity',
             
             # Phase 1: Asset Classification (NIST SP 800-60)
             'classification', 'classification_value',
@@ -98,6 +93,7 @@ class AssetListingSerializer(serializers.ModelSerializer):
             
             # Phase 4: Model Comparison Results (Standards-compliant)
             'traditional_fuzzy_prediction', 'modern_svm_prediction', 'modern_dt_prediction',
+            'traditional_fuzzy_score', 'modern_svm_score', 'modern_dt_score',
             
             # Standards and Methodology Tracking
             'standards_version', 'methodology',
@@ -117,6 +113,8 @@ class AssetListingSerializer(serializers.ModelSerializer):
             'likelihood', 'consequence', 'compliance_factor', 'industry_factor',
             'calculated_risk_level', 'harm_value', 'mathematical_risk_category',
             'traditional_fuzzy_prediction', 'modern_svm_prediction', 'modern_dt_prediction',
+            'traditional_fuzzy_confidence', 'modern_svm_confidence', 'modern_dt_confidence',
+            'traditional_fuzzy_score', 'modern_svm_score', 'modern_dt_score',
             'dt_predicted_risk_level', 'rf_predicted_risk_level', 'ensemble_predicted_risk_level',
             'standards_version', 'methodology',
             'comparison_performed_date', 'last_analysis_date', 'created_at', 'updated_at',
@@ -137,14 +135,17 @@ class AssetListingSerializer(serializers.ModelSerializer):
 
 
 class AssetListingCreateSerializer(serializers.ModelSerializer):
-    """Standards-compliant serializer for creating new AssetListing instances"""
+    """Streamlined serializer for creating new AssetListing instances - only frontend-provided fields"""
     
     class Meta:
         model = AssetListing
         fields = [
-            'asset', 'description', 'asset_type', 'owner_department', 'asset_value',
-            'asset_category', 'industry_sector', 'compliance_framework', 'nist_function',
-            'confidentiality', 'integrity', 'availability', 'risk_treatment'
+            # User-provided fields from form
+            'asset', 'description', 'asset_type', 'owner_department', 
+            'industry_sector', 'compliance_framework',
+            # Frontend-calculated fields (sent by frontend)
+            'asset_category',
+            'business_criticality', 'regulatory_impact', 'operational_dependency', 'data_sensitivity'
         ]
     
     def validate(self, data):
@@ -155,12 +156,6 @@ class AssetListingCreateSerializer(serializers.ModelSerializer):
                 'asset_category': 'NIST CSF asset category is required for standards compliance.'
             })
         
-        # Ensure industry_sector is provided
-        if not data.get('industry_sector'):
-            raise serializers.ValidationError({
-                'industry_sector': 'Industry sector is required for regulatory context.'
-            })
-        
         return data
 
 
@@ -168,13 +163,12 @@ class AssetListingStandardsSerializer(serializers.ModelSerializer):
     """Specialized serializer focused on standards compliance fields"""
     
     owner_department_name = serializers.CharField(source='owner_department.name', read_only=True)
-    asset_value_name = serializers.CharField(source='asset_value.qualitative_value', read_only=True)
     
     class Meta:
         model = AssetListing
         fields = [
             'id', 'asset', 'asset_category', 'industry_sector', 'compliance_framework',
-            'owner_department_name', 'asset_value_name', 'nist_function',
+            'owner_department_name', 'nist_function',
             'classification', 'likelihood', 'consequence', 'calculated_risk_level',
             'mathematical_risk_category', 'standards_version', 'methodology'
         ]
@@ -236,7 +230,6 @@ class ModelComparisonSerializer(serializers.ModelSerializer):
             'id', 'asset', 'asset_name', 'experiment_name',
             'input_confidentiality', 'input_integrity', 'input_availability', 'input_asset_classification',
             'fuzzy_prediction', 'svm_prediction', 'dt_prediction',
-            'fuzzy_confidence', 'svm_confidence', 'dt_confidence',
             'expert_label', 'standards_compliant', 'comparison_date', 'comparison_version',
             'created_at', 'updated_at'
         ]
@@ -279,16 +272,34 @@ class RiskIdentificationRequestSerializer(serializers.Serializer):
     """ISO 27005 compliant serializer for risk identification requests"""
     
     asset_id = serializers.UUIDField()
-    confidentiality = serializers.FloatField(min_value=0.0, max_value=1.0)
-    integrity = serializers.FloatField(min_value=0.0, max_value=1.0)
-    availability = serializers.FloatField(min_value=0.0, max_value=1.0)
+    confidentiality = serializers.FloatField(
+        min_value=0.0, 
+        max_value=1.0,
+        help_text="Confidentiality impact score (0.0-1.0): 0.0=No Impact, 0.33=Low, 0.66=Moderate, 1.0=High"
+    )
+    integrity = serializers.FloatField(
+        min_value=0.0, 
+        max_value=1.0,
+        help_text="Integrity impact score (0.0-1.0): 0.0=No Impact, 0.33=Low, 0.66=Moderate, 1.0=High"
+    )
+    availability = serializers.FloatField(
+        min_value=0.0, 
+        max_value=1.0,
+        help_text="Availability impact score (0.0-1.0): 0.0=No Impact, 0.33=Low, 0.66=Moderate, 1.0=High"
+    )
     use_iso27005_methodology = serializers.BooleanField(default=True)
     
-    def validate_asset_id(self, value):
-        """Validate that the asset exists"""
-        if not AssetListing.objects.filter(id=value).exists():
-            raise serializers.ValidationError("Asset with this ID does not exist.")
-        return value
+    def validate(self, data):
+        """Validate CIA triad scores follow NIST guidelines"""
+        cia_scores = [data['confidentiality'], data['integrity'], data['availability']]
+        
+        # Warn if all scores are identical (might indicate insufficient assessment)
+        if len(set(cia_scores)) == 1 and cia_scores[0] not in [0.0, 1.0]:
+            # This is a warning, not an error - allow but log
+            import logging
+            logging.warning(f"Asset {data['asset_id']}: All CIA scores identical ({cia_scores[0]}) - verify assessment")
+        
+        return data
 
 
 class RiskAnalysisRequestSerializer(serializers.Serializer):
@@ -372,14 +383,12 @@ class BatchComparisonRequestSerializer(serializers.Serializer):
 # Response serializers
 
 class AssetClassificationResponseSerializer(serializers.Serializer):
-    """Standards-compliant serializer for asset classification responses"""
+    """Simplified serializer for asset classification responses"""
     
     asset_id = serializers.UUIDField()
     classification = serializers.CharField()
     classification_value = serializers.FloatField()
-    nist_impact_level = serializers.CharField()
     methodology = serializers.CharField()
-    standards_version = serializers.CharField()
     timestamp = serializers.DateTimeField()
 
 
@@ -416,7 +425,7 @@ class ModelComparisonResponseSerializer(serializers.Serializer):
     asset_id = serializers.UUIDField()
     input_features = serializers.DictField()
     predictions = serializers.DictField()
-    confidence_scores = serializers.DictField()
+
     approach_details = serializers.DictField()
     consensus = serializers.DictField()
     standards_compliant = serializers.BooleanField()

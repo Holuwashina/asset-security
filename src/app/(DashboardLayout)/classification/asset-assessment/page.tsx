@@ -85,6 +85,12 @@ const AssetAssessmentPage = () => {
       description: 'Compare traditional vs modern approaches',
       icon: GitCompare,
       color: 'bg-purple-500'
+    },
+    {
+      title: 'Risk Treatment',
+      description: 'Define risk treatment and mitigation strategies',
+      icon: TrendingUp,
+      color: 'bg-teal-500'
     }
   ];
 
@@ -116,19 +122,8 @@ const AssetAssessmentPage = () => {
   const handleIdentifyRisk = async () => {
     if (!assetId) return;
     
-    try {
-      await identifyRiskMutation.mutateAsync({
-        id: assetId,
-        data: {
-          confidentiality: Math.random(), // 0-1 scale
-          integrity: Math.random(), // 0-1 scale
-          availability: Math.random() // 0-1 scale
-        }
-      });
-      toast.success('Risk identified successfully');
-    } catch (error) {
-      toast.error('Failed to identify risk');
-    }
+    // Redirect to proper Risk Identification workflow instead of using random values
+    router.push(`/classification/risk-identification?id=${assetId}`);
   };
 
   const handleAnalyzeRisk = async () => {
@@ -294,10 +289,6 @@ const AssetAssessmentPage = () => {
                     <label className="text-sm font-medium text-gray-700">Owner Department</label>
                     <p className="text-lg">{selectedAsset.owner_department_name}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Asset Value</label>
-                    <p className="text-lg">{selectedAsset.asset_value_name}</p>
-                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Description</label>
@@ -367,15 +358,15 @@ const AssetAssessmentPage = () => {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                           <label className="text-sm text-gray-600">Confidentiality</label>
-                          <div className="font-medium">{selectedAsset.confidentiality ? (selectedAsset.confidentiality * 100).toFixed(0) + '%' : 'N/A'}</div>
+                          <div className="font-medium">{selectedAsset.confidentiality ? selectedAsset.confidentiality.toFixed(2) : 'N/A'}</div>
                         </div>
                         <div>
                           <label className="text-sm text-gray-600">Integrity</label>
-                          <div className="font-medium">{selectedAsset.integrity ? (selectedAsset.integrity * 100).toFixed(0) + '%' : 'N/A'}</div>
+                          <div className="font-medium">{selectedAsset.integrity ? selectedAsset.integrity.toFixed(2) : 'N/A'}</div>
                         </div>
                         <div>
                           <label className="text-sm text-gray-600">Availability</label>
-                          <div className="font-medium">{selectedAsset.availability ? (selectedAsset.availability * 100).toFixed(0) + '%' : 'N/A'}</div>
+                          <div className="font-medium">{selectedAsset.availability ? selectedAsset.availability.toFixed(2) : 'N/A'}</div>
                         </div>
                         <div>
                           <label className="text-sm text-gray-600">Risk Index</label>
@@ -507,6 +498,57 @@ const AssetAssessmentPage = () => {
                         <GitCompare className="h-4 w-4 mr-2" />
                       )}
                       Compare Models
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeStep === 5 && (
+              <div className="space-y-6">
+                <h3 className="font-medium">Risk Treatment</h3>
+                {selectedAsset.risk_treatment ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-teal-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-5 w-5 text-teal-600" />
+                        <span className="font-medium">Risk Treatment Plan Complete</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm text-gray-600">Treatment Strategy</label>
+                          <Badge variant="outline" className="ml-2">
+                            {selectedAsset.risk_treatment}
+                          </Badge>
+                        </div>
+                        <div>
+                          <label className="text-sm text-gray-600">Consensus Risk Level</label>
+                          <div className="font-medium ml-2">
+                            {selectedAsset.mathematical_risk_category || 'Not Available'}
+                          </div>
+                        </div>
+                      </div>
+                      {selectedAsset.treatment_notes && (
+                        <div className="mt-3">
+                          <label className="text-sm text-gray-600">Implementation Notes</label>
+                          <div className="mt-1 p-2 bg-white rounded text-sm border">
+                            {selectedAsset.treatment_notes}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h4 className="font-medium mb-2">Risk Treatment Not Defined</h4>
+                    <p className="text-gray-600 mb-4">Define the risk treatment strategy for this asset.</p>
+                    <Button
+                      onClick={() => router.push(`/classification/risk-handling?id=${assetId}`)}
+                      className="bg-teal-600 hover:bg-teal-700"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Define Risk Treatment
                     </Button>
                   </div>
                 )}

@@ -51,24 +51,17 @@ const Menuitems = [
     href: "/classification/assets",
     description: "View and manage assets"
   },
-  {
-    id: uniqueId(),
-    title: "Asset Classification",
-    icon: Cpu,
-    href: "/classification/asset-classify",
-    description: "Classify asset importance"
-  },
-  {
-    id: uniqueId(),
-    title: "Asset Assessment",
-    icon: Target,
-    href: "/classification/asset-assessment",
-    description: "Evaluate asset security"
-  },
   
   {
     navlabel: true,
-    subheader: "Risk Management",
+    subheader: "Risk Assessment",
+  },
+  {
+    id: uniqueId(),
+    title: "Classification",
+    icon: Cpu,
+    href: "/classification/asset-classify",
+    description: "Classify asset importance"
   },
   {
     id: uniqueId(),
@@ -93,10 +86,28 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: "Model Comparison",
+    icon: BarChart3,
+    href: "/classification/asset-assessment",
+    description: "Compare traditional vs modern approaches"
+  },
+  {
+    navlabel: true,
+    subheader: "Reports & Analytics",
+  },
+  {
+    id: uniqueId(),
     title: "Classification Report",
     icon: FileText,
     href: "/classification/asset-report",
     description: "Comprehensive reports"
+  },
+  {
+    id: uniqueId(),
+    title: "Performance Metrics",
+    icon: Activity,
+    href: "/classification/model-metrics",
+    description: "Model performance data"
   },
   
   {
@@ -109,18 +120,6 @@ const Menuitems = [
     icon: Brain,
     href: "/ml-training",
     description: "Train and test ML models"
-  },
-  
-  {
-    navlabel: true,
-    subheader: "Analytics",
-  },
-  {
-    id: uniqueId(),
-    title: "Performance Metrics",
-    icon: Activity,
-    href: "/classification/model-metrics",
-    description: "Model performance data"
   },
   
   {

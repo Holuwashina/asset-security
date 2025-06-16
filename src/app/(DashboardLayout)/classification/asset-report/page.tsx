@@ -180,11 +180,20 @@ const AssetClassificationReportPage = () => {
   };
 
   const getClassificationBadgeVariant = (classification: string) => {
-    switch (classification?.toLowerCase()) {
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'outline';
+    // Handle Government Classification levels
+    const cleanClassification = classification?.replace(/\s*\([0-9.]+\)$/, '').toLowerCase();
+    
+    switch (cleanClassification) {
+      case 'restricted':
+        return 'destructive';
+      case 'confidential':
+        return 'default';
+      case 'official':
+        return 'secondary';
+      case 'public':
+        return 'outline';
+      default: 
+        return 'outline';
     }
   };
 
@@ -591,9 +600,9 @@ const AssetClassificationReportPage = () => {
                       {assets.filter((asset: Asset) => asset.risk_index).map((asset: Asset) => (
                         <TableRow key={asset.id}>
                           <TableCell className="font-medium">{asset.asset}</TableCell>
-                          <TableCell>{asset.confidentiality ? (asset.confidentiality * 100).toFixed(0) + '%' : 'N/A'}</TableCell>
-                          <TableCell>{asset.integrity ? (asset.integrity * 100).toFixed(0) + '%' : 'N/A'}</TableCell>
-                          <TableCell>{asset.availability ? (asset.availability * 100).toFixed(0) + '%' : 'N/A'}</TableCell>
+                                          <TableCell>{asset.confidentiality ? asset.confidentiality.toFixed(2) : 'N/A'}</TableCell>
+                <TableCell>{asset.integrity ? asset.integrity.toFixed(2) : 'N/A'}</TableCell>
+                <TableCell>{asset.availability ? asset.availability.toFixed(2) : 'N/A'}</TableCell>
                           <TableCell>{asset.risk_index?.toFixed(2) || 'N/A'}</TableCell>
                           <TableCell>{asset.calculated_risk_level?.toFixed(2) || 'N/A'}</TableCell>
                           <TableCell>
@@ -624,7 +633,6 @@ const AssetClassificationReportPage = () => {
                         <TableHead>Asset Name</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Department</TableHead>
-                        <TableHead>Owner</TableHead>
                         <TableHead>Classification</TableHead>
                         <TableHead>Risk Category</TableHead>
                         <TableHead>Value</TableHead>
@@ -637,7 +645,6 @@ const AssetClassificationReportPage = () => {
                           <TableCell className="font-medium">{asset.asset}</TableCell>
                           <TableCell>{asset.asset_type}</TableCell>
                           <TableCell>{asset.owner_department_name}</TableCell>
-                          <TableCell>{asset.asset_value_name}</TableCell>
                           <TableCell>
                             {asset.classification ? (
                               <Badge variant={getClassificationBadgeVariant(asset.classification)}>

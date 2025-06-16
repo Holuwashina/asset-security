@@ -1,6 +1,7 @@
 "use client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import ToastContainer from "@/components/ui/toast";
 import "./globals.css";
 
 // Create a client for React Query (REST API state management)
@@ -30,6 +31,7 @@ export default function RootLayout({
         <QueryClientProvider client={queryClient}>
           {children}
           <Toaster />
+          <ToastContainer />
         </QueryClientProvider>
       </body>
     </html>

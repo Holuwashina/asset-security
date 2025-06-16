@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useMLTraining } from '@/lib/hooks/useMLTraining';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,60 +10,44 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Upload, 
-  Download, 
-  Play, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  Upload,
+  Download,
+  Play,
+  CheckCircle,
+  AlertCircle,
   BarChart3,
   FileText,
   Brain,
   Database,
   RefreshCw,
   Wifi,
-  WifiOff
+  WifiOff,
+  Loader2
 } from 'lucide-react';
-
-interface Dataset {
-  dataset_id: string;
-  dataset_type: string;
-  model_name: string;
-  upload_date: string;
-  total_records: number;
-  features_count: number;
-  target_classes: string[];
-  class_distribution: Record<string, number>;
-}
-
-interface TrainedModel {
-  model_id: string;
-  model_type: string;
-  training_accuracy: number;
-  testing_accuracy: number;
-  cv_accuracy: number;
-  cv_std: number;
-  training_samples: number;
-  testing_samples: number;
-  features_used: string[];
-  target_classes: string[];
-  training_time: number;
-  model_path: string;
-}
-
-interface ModelPrediction {
-  input: Record<string, any>;
-  prediction: string;
-  probabilities: Record<string, number>;
-}
+import { Dataset, TrainedModel, ModelPrediction } from '@/lib/api';
 
 export default function MLTrainingPage() {
-  // State management
+  // Use the centralized ML Training hook
+  const {
+    uploadDataset,
+    listDatasets,
+    trainModels,
+    listModels,
+    testModel,
+    downloadModelReport,
+    validateCSVFile,
+    formatModelPerformance,
+    getBestModel,
+    loading,
+    error,
+    clearError
+  } = useMLTraining();
+
+  // Local state management
   const [activeTab, setActiveTab] = useState('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [modelName, setModelName] = useState('Asset_Classification_Model');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -74,12 +59,13 @@ export default function MLTrainingPage() {
   const [selectedModels, setSelectedModels] = useState<string[]>(['random_forest']);
   
   const [testData, setTestData] = useState({
+    business_criticality: 0.8,
+    data_sensitivity: 0.9,
+    operational_dependency: 0.7,
+    regulatory_impact: 0.8,
     confidentiality: 0.8,
     integrity: 0.9,
-    availability: 0.7,
-    cia_average: 0.8,
-    cia_max: 0.9,
-    value_impact: 0.7
+    availability: 0.7
   });
   const [selectedModelForTest, setSelectedModelForTest] = useState<string>('');
   const [predictions, setPredictions] = useState<ModelPrediction[]>([]);
@@ -89,38 +75,15 @@ export default function MLTrainingPage() {
     checkApiStatus();
   }, []);
 
-  // Auto-calculate derived features
-  useEffect(() => {
-    const { confidentiality, integrity, availability } = testData;
-    const cia_average = (confidentiality + integrity + availability) / 3;
-    const cia_max = Math.max(confidentiality, integrity, availability);
-    
-    setTestData(prev => ({
-      ...prev,
-      cia_average: Number(cia_average.toFixed(3)),
-      cia_max: Number(cia_max.toFixed(3))
-    }));
-  }, [testData.confidentiality, testData.integrity, testData.availability]);
+  // No derived features needed - using 7 direct parameters
 
   const checkApiStatus = async () => {
     setApiStatus('checking');
     try {
-      // Check if basic Django API is working using the configured API URL
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-      const response = await fetch(`${API_BASE_URL}/assets/`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        setApiStatus('online');
-        // If basic API works, try to load ML data
-        loadInitialData();
-      } else {
-        setApiStatus('offline');
-      }
+      // Test API by trying to list datasets
+      await listDatasets();
+      setApiStatus('online');
+      loadInitialData();
     } catch (err) {
       setApiStatus('offline');
     }
@@ -128,37 +91,16 @@ export default function MLTrainingPage() {
 
   const loadInitialData = async () => {
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-      
-      // Try to load datasets
-      const datasetsResponse = await fetch(`${API_BASE_URL}/ml/list_datasets/`);
-      if (datasetsResponse.ok) {
-        const datasetsData = await datasetsResponse.json();
-        setDatasets(datasetsData.datasets || []);
-      }
+      // Load datasets
+      const datasetsData = await listDatasets();
+      setDatasets(datasetsData || []);
 
-      // Try to load models
-      const modelsResponse = await fetch(`${API_BASE_URL}/ml/list_models/`);
-      if (modelsResponse.ok) {
-        const modelsData = await modelsResponse.json();
-        setTrainedModels(modelsData.models || []);
-      }
+      // Load models
+      const modelsData = await listModels();
+      setTrainedModels(modelsData || []);
     } catch (err) {
-      console.error('Failed to load ML data:', err);
+      // Handle error silently for production
     }
-  };
-
-  const validateCSVFile = (file: File): { valid: boolean; error?: string } => {
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      return { valid: false, error: 'File must be a CSV file' };
-    }
-    
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      return { valid: false, error: 'File size must be less than 50MB' };
-    }
-    
-    return { valid: true };
   };
 
   const handleFileUpload = async () => {
@@ -167,39 +109,16 @@ export default function MLTrainingPage() {
     // Validate file
     const validation = validateCSVFile(selectedFile);
     if (!validation.valid) {
-      setError(validation.error || 'Invalid file');
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     try {
-      const formData = new FormData();
-      formData.append('csv_file', selectedFile);
-      formData.append('dataset_type', 'training');
-      formData.append('model_name', modelName);
-
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-      const response = await fetch(`${API_BASE_URL}/ml/upload_dataset/`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSelectedFile(null);
-        await loadInitialData(); // Reload datasets
-        setActiveTab('train');
-        setError(null);
-      } else {
-        const errorData = await response.json();
-        setError(`Upload failed: ${errorData.error || response.statusText}`);
-      }
+      await uploadDataset(selectedFile, modelName, 'training');
+      setSelectedFile(null);
+      await loadInitialData(); // Reload datasets
+      setActiveTab('train');
     } catch (err) {
-      setError(`Upload error: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setLoading(false);
+      // Error handled by hook
     }
   };
 
@@ -208,7 +127,6 @@ export default function MLTrainingPage() {
 
     setIsTraining(true);
     setTrainingProgress(0);
-    setError(null);
 
     // Simulate progress
     const progressInterval = setInterval(() => {
@@ -216,32 +134,14 @@ export default function MLTrainingPage() {
     }, 1000);
 
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-      const response = await fetch(`${API_BASE_URL}/ml/train_models/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          dataset_id: selectedDataset,
-          models: selectedModels,
-        }),
-      });
-
+      await trainModels(selectedDataset, selectedModels);
       clearInterval(progressInterval);
       setTrainingProgress(100);
-
-      if (response.ok) {
-        await loadInitialData(); // Reload models
-        setActiveTab('results');
-        setError(null);
-      } else {
-        const errorData = await response.json();
-        setError(`Training failed: ${errorData.error || response.statusText}`);
-      }
+      await loadInitialData(); // Reload models
+      setActiveTab('results');
     } catch (err) {
       clearInterval(progressInterval);
-      setError(`Training error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      // Error handled by hook
     } finally {
       setIsTraining(false);
     }
@@ -250,80 +150,42 @@ export default function MLTrainingPage() {
   const handleTestModel = async () => {
     if (!selectedModelForTest) return;
 
-    setLoading(true);
-    setError(null);
-
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-      const response = await fetch(`${API_BASE_URL}/ml/test_model/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model_id: selectedModelForTest,
-          test_data: [testData],
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPredictions(data.predictions || []);
-        setError(null);
-      } else {
-        const errorData = await response.json();
-        setError(`Testing failed: ${errorData.error || response.statusText}`);
+      const result = await testModel(selectedModelForTest, [testData]);
+      if (result) {
+        setPredictions(result.predictions || []);
       }
     } catch (err) {
-      setError(`Testing error: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setLoading(false);
+      // Error handled by hook
     }
   };
 
   const handleDownloadReport = async (modelId: string) => {
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-      const response = await fetch(`${API_BASE_URL}/ml/download_model_report/?model_id=${modelId}`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${modelId}_report.json`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        setError('Failed to download report');
-      }
+      await downloadModelReport(modelId);
     } catch (err) {
-      setError(`Download error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      // Error handled by hook
     }
   };
 
-  const clearError = () => setError(null);
+  // Loading state
+  const isLoading = loading || isTraining;
 
-  const formatModelPerformance = (model: TrainedModel) => {
-    return {
-      ...model,
-      training_accuracy_percent: (model.training_accuracy * 100).toFixed(1),
-      testing_accuracy_percent: (model.testing_accuracy * 100).toFixed(1),
-      cv_accuracy_percent: (model.cv_accuracy * 100).toFixed(1),
-      training_time_formatted: `${model.training_time.toFixed(1)}s`,
-      model_type_formatted: model.model_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    };
-  };
+  // Check if we're using placeholder data (API not available)
+  const usingPlaceholderData = apiStatus === 'offline';
 
-  const getBestModel = (): TrainedModel | null => {
-    if (trainedModels.length === 0) return null;
-    return trainedModels.reduce((best, current) => 
-      current.testing_accuracy > best.testing_accuracy ? current : best
+  if (loading && datasets.length === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm text-gray-600">Loading ML Training data...</p>
+        </div>
+      </div>
     );
-  };
+  }
 
-  const bestModel = getBestModel();
+  const bestModel = getBestModel(trainedModels);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -360,7 +222,7 @@ export default function MLTrainingPage() {
         </div>
       </div>
 
-      {/* Error Alert - Only for specific operation errors */}
+      {/* Error Alert */}
       {error && apiStatus === 'online' && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -635,6 +497,54 @@ export default function MLTrainingPage() {
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
+                  <Label>Business Criticality</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={testData.business_criticality}
+                    onChange={(e) => setTestData({...testData, business_criticality: parseFloat(e.target.value) || 0})}
+                    disabled={apiStatus === 'offline'}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data Sensitivity</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={testData.data_sensitivity}
+                    onChange={(e) => setTestData({...testData, data_sensitivity: parseFloat(e.target.value) || 0})}
+                    disabled={apiStatus === 'offline'}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Operational Dependency</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={testData.operational_dependency}
+                    onChange={(e) => setTestData({...testData, operational_dependency: parseFloat(e.target.value) || 0})}
+                    disabled={apiStatus === 'offline'}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Regulatory Impact</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={testData.regulatory_impact}
+                    onChange={(e) => setTestData({...testData, regulatory_impact: parseFloat(e.target.value) || 0})}
+                    disabled={apiStatus === 'offline'}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label>Confidentiality</Label>
                   <Input
                     type="number"
@@ -667,36 +577,6 @@ export default function MLTrainingPage() {
                     step="0.1"
                     value={testData.availability}
                     onChange={(e) => setTestData({...testData, availability: parseFloat(e.target.value) || 0})}
-                    disabled={apiStatus === 'offline'}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>CIA Average</Label>
-                  <Input
-                    type="number"
-                    value={testData.cia_average}
-                    readOnly
-                    className="bg-gray-50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>CIA Max</Label>
-                  <Input
-                    type="number"
-                    value={testData.cia_max}
-                    readOnly
-                    className="bg-gray-50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Value Impact</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={testData.value_impact}
-                    onChange={(e) => setTestData({...testData, value_impact: parseFloat(e.target.value) || 0})}
                     disabled={apiStatus === 'offline'}
                   />
                 </div>

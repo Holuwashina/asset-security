@@ -100,10 +100,10 @@ class MLTrainingViewSet(viewsets.ViewSet):
                     'error': f'Error reading CSV file: {str(e)}'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Validate required columns
+            # Validate required columns for 7-parameter approach
             required_columns = [
-                'asset_category', 'business_context', 'asset_value', 
-                'confidentiality', 'integrity', 'availability', 'risk_category'
+                'business_criticality', 'data_sensitivity', 'operational_dependency', 
+                'regulatory_impact', 'confidentiality', 'integrity', 'availability', 'risk_category'
             ]
             
             missing_columns = [col for col in required_columns if col not in df.columns]
@@ -111,7 +111,18 @@ class MLTrainingViewSet(viewsets.ViewSet):
                 return Response({
                     'error': f'Missing required columns: {missing_columns}',
                     'required_columns': required_columns,
-                    'found_columns': list(df.columns)
+                    'found_columns': list(df.columns),
+                    'note': 'This system now uses 7-parameter approach: business_criticality, data_sensitivity, operational_dependency, regulatory_impact, confidentiality, integrity, availability'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate government classification levels
+            valid_risk_categories = ['Public', 'Official', 'Confidential', 'Restricted']
+            invalid_categories = set(df['risk_category'].unique()) - set(valid_risk_categories)
+            if invalid_categories:
+                return Response({
+                    'error': f'Invalid risk categories found: {list(invalid_categories)}',
+                    'valid_categories': valid_risk_categories,
+                    'note': 'This system uses government classification levels: Public, Official, Confidential, Restricted'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Save dataset
@@ -119,17 +130,37 @@ class MLTrainingViewSet(viewsets.ViewSet):
             dataset_path = os.path.join(self.models_dir, f"{dataset_id}.csv")
             df.to_csv(dataset_path, index=False)
             
-            # Generate dataset statistics
+            # Generate dataset statistics for 7-parameter approach
             stats = {
                 'dataset_id': dataset_id,
                 'dataset_type': dataset_type,
                 'model_name': model_name,
                 'upload_date': datetime.now().isoformat(),
                 'total_records': len(df),
-                'features_count': len(df.columns) - 1,  # Exclude target column
+                'features_count': 7,  # 7-parameter approach
                 'target_classes': sorted(df['risk_category'].unique().tolist()),
                 'class_distribution': df['risk_category'].value_counts().to_dict(),
                 'feature_statistics': {
+                    'business_criticality': {
+                        'min': float(df['business_criticality'].min()),
+                        'max': float(df['business_criticality'].max()),
+                        'mean': float(df['business_criticality'].mean())
+                    },
+                    'data_sensitivity': {
+                        'min': float(df['data_sensitivity'].min()),
+                        'max': float(df['data_sensitivity'].max()),
+                        'mean': float(df['data_sensitivity'].mean())
+                    },
+                    'operational_dependency': {
+                        'min': float(df['operational_dependency'].min()),
+                        'max': float(df['operational_dependency'].max()),
+                        'mean': float(df['operational_dependency'].mean())
+                    },
+                    'regulatory_impact': {
+                        'min': float(df['regulatory_impact'].min()),
+                        'max': float(df['regulatory_impact'].max()),
+                        'mean': float(df['regulatory_impact'].mean())
+                    },
                     'confidentiality': {
                         'min': float(df['confidentiality'].min()),
                         'max': float(df['confidentiality'].max()),
@@ -146,7 +177,9 @@ class MLTrainingViewSet(viewsets.ViewSet):
                         'mean': float(df['availability'].mean())
                     }
                 },
-                'file_path': dataset_path
+                'file_path': dataset_path,
+                'approach': '7-parameter enhanced fuzzy logic compatible',
+                'classification_levels': ['Public', 'Official', 'Confidential', 'Restricted']
             }
             
             # Save dataset metadata
@@ -190,19 +223,20 @@ class MLTrainingViewSet(viewsets.ViewSet):
             
             df = pd.read_csv(dataset_path)
             
-            # Prepare features and target
+            # Prepare features and target for 7-parameter approach
             feature_columns = [
-                'confidentiality', 'integrity', 'availability', 
-                'cia_average', 'cia_max', 'value_impact'
+                'business_criticality', 'data_sensitivity', 'operational_dependency', 
+                'regulatory_impact', 'confidentiality', 'integrity', 'availability'
             ]
             
-            # Use available feature columns
+            # Use available feature columns (all 7 should be present after validation)
             available_features = [col for col in feature_columns if col in df.columns]
-            if not available_features:
+            if len(available_features) != 7:
                 return Response({
-                    'error': 'No valid feature columns found',
+                    'error': 'Incomplete 7-parameter feature set',
                     'expected': feature_columns,
-                    'available': list(df.columns)
+                    'available': available_features,
+                    'missing': list(set(feature_columns) - set(available_features))
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             X = df[available_features].values

@@ -12,7 +12,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 from .views import (
     AssetListingViewSet,
     DepartmentViewSet,
-    AssetValueMappingViewSet,
+    # AssetValueMappingViewSet, # Removed as model is deleted
     AssetTypeViewSet,
     AssetViewSet,
     AssessmentCategoryViewSet,
@@ -31,7 +31,7 @@ router = DefaultRouter()
 # Asset management endpoints
 router.register(r'assets', AssetListingViewSet, basename='assetlisting')
 router.register(r'departments', DepartmentViewSet, basename='department')
-router.register(r'asset-value-mappings', AssetValueMappingViewSet, basename='assetvaluemapping')
+# router.register(r'asset-value-mappings', AssetValueMappingViewSet, basename='assetvaluemapping') # Removed
 router.register(r'asset-types', AssetTypeViewSet, basename='assettype')
 router.register(r'base-assets', AssetViewSet, basename='asset')
 
@@ -72,10 +72,11 @@ ASSET MANAGEMENT:
 - DELETE /api/assets/{id}/                - Delete asset
 
 ASSET CLASSIFICATION (5-Phase Framework):
-- POST   /api/assets/{id}/classify_asset/     - Phase 1: Classify asset using fuzzy logic
-- POST   /api/assets/{id}/identify_risk/      - Phase 2: Identify risk using CIA triad
-- POST   /api/assets/{id}/analyze_risk/       - Phase 3: Analyze risk using mathematical formula
-- POST   /api/assets/{id}/compare_models/     - Phase 4: Compare all three approaches
+- POST   /api/assets/{id}/classify_asset/         - Phase 1: Classify asset using fuzzy logic
+- POST   /api/assets/{id}/classify_asset_ensemble/ - Phase 1: Enhanced classification using fuzzy logic + ML models
+- POST   /api/assets/{id}/identify_risk/          - Phase 2: Identify risk using CIA triad
+- POST   /api/assets/{id}/analyze_risk/           - Phase 3: Analyze risk using mathematical formula
+- POST   /api/assets/{id}/compare_models/         - Phase 4: Compare all three approaches
 # Phase 5: Risk handling available through frontend interface
 
 BATCH OPERATIONS:
@@ -92,7 +93,7 @@ ML TRAINING & TESTING:
 
 SUPPORTING DATA:
 - GET    /api/departments/                    - List departments
-- GET    /api/asset-value-mappings/           - List asset value mappings
+# - GET    /api/asset-value-mappings/           - List asset value mappings # Removed
 - GET    /api/asset-types/                    - List asset types
 - GET    /api/assessment-categories/          - List assessment categories
 - GET    /api/assessment-questions/           - List assessment questions

@@ -73,11 +73,11 @@ def compute_risk_level(confidentiality, integrity, availability, classification_
         # Create simulation
         risk_sim = ctrl.ControlSystemSimulation(risk_ctrl)
         
-        # Set inputs (ensure they're within valid range)
-        risk_sim.input['confidentiality'] = min(max(confidentiality, 0), 10)
-        risk_sim.input['integrity'] = min(max(integrity, 0), 10)
-        risk_sim.input['availability'] = min(max(availability, 0), 10)
-        risk_sim.input['classification'] = min(max(classification_value, 0), 10)
+        # Set inputs (ensure they're within valid range 0-1)
+        risk_sim.input['confidentiality'] = min(max(confidentiality, 0), 1.0)
+        risk_sim.input['integrity'] = min(max(integrity, 0), 1.0)
+        risk_sim.input['availability'] = min(max(availability, 0), 1.0)
+        risk_sim.input['classification'] = min(max(classification_value, 0), 1.0)
         
         # Compute result
         risk_sim.compute()

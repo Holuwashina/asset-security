@@ -1,11 +1,5 @@
-/**
- * API client for Asset Classification Backend
- * Connects frontend to Django REST API
- */
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-// API Client class
 class ApiClient {
   private baseURL: string;
 
@@ -28,22 +22,31 @@ class ApiClient {
       const response = await fetch(url, config);
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.text();
+        const error = new Error(`HTTP error! status: ${response.status}`);
+        (error as any).response = {
+          status: response.status,
+          data: errorData ? JSON.parse(errorData) : null
+        };
+        throw error;
+      }
+      
+      // Handle 204 No Content responses (like DELETE)
+      if (response.status === 204) {
+        return {} as T;
       }
       
       return await response.json();
     } catch (error) {
-      // Silent failure for development - don't log API connection errors
       throw error;
     }
   }
 
-  // Assets endpoints
-  async getAssets() {
+  async getAssets(): Promise<{ results: Asset[]; count: number }> {
     return this.request('/assets/');
   }
 
-  async getAsset(id: string) {
+  async getAsset(id: string): Promise<Asset> {
     return this.request(`/assets/${id}/`);
   }
 
@@ -67,18 +70,46 @@ class ApiClient {
     });
   }
 
-  // Classification endpoints (Five-Phase Framework)
-  async classifyAsset(id: string) {
-    return this.request(`/assets/${id}/classify_asset/`, {
+  async post(endpoint: string, data?: any) {
+    return this.request(endpoint, {
       method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async identifyRisk(id: string, data: { confidentiality: number; integrity: number; availability: number }) {
-    return this.request(`/assets/${id}/identify_risk/`, {
+  async put(endpoint: string, data?: any) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async get(endpoint: string) {
+    return this.request(endpoint);
+  }
+
+  async classifyAsset(id: string, data?: any) {
+    return this.request(`/assets/${id}/classify_asset/`, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async identifyRisk(id: string, data: { 
+    confidentiality: number; 
+    integrity: number; 
+    availability: number;
+    methodology?: string;
+    include_methodologies?: string[];
+  }) {
+    return this.request(`/assets/${id}/identify_risk_enhanced/`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  async getRiskIdentificationMethodologies(id: string) {
+    return this.request(`/assets/${id}/risk_identification_methodologies/`);
   }
 
   async analyzeRisk(id: string) {
@@ -94,7 +125,6 @@ class ApiClient {
     });
   }
 
-  // Batch operations
   async batchCompare(assetIds: string[], experimentName?: string) {
     return this.request('/assets/batch_compare/', {
       method: 'POST',
@@ -109,17 +139,12 @@ class ApiClient {
     return this.request('/assets/performance_metrics/');
   }
 
-  // Supporting data endpoints
-  async getDepartments() {
+  async getDepartments(): Promise<{ results: Department[] }> {
     return this.request('/departments/');
   }
 
-  async getAssetTypes() {
+  async getAssetTypes(): Promise<{ results: AssetType[] }> {
     return this.request('/asset-types/');
-  }
-
-  async getAssetValues() {
-    return this.request('/asset-value-mappings/');
   }
 
   async getAssessmentQuestions() {
@@ -130,7 +155,6 @@ class ApiClient {
     return this.request('/assessment-categories/');
   }
 
-  // Assessment questions CRUD
   async createAssessmentQuestion(data: any) {
     return this.request('/assessment-questions/', {
       method: 'POST',
@@ -151,7 +175,6 @@ class ApiClient {
     });
   }
 
-  // Model performance endpoints
   async getClassificationReports() {
     return this.request('/classification-reports/');
   }
@@ -167,6 +190,79 @@ class ApiClient {
   async getPerformanceComparisons() {
     return this.request('/performance-comparisons/');
   }
+
+  async uploadDataset(file: File, modelName: string, datasetType: string = 'training') {
+    const formData = new FormData();
+    formData.append('csv_file', file);
+    formData.append('dataset_type', datasetType);
+    formData.append('model_name', modelName);
+    
+    const url = `${this.baseURL}/ml/upload_dataset/`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type for FormData
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async trainModels(datasetId: string, models: string[] = ['random_forest', 'svm', 'decision_tree']) {
+    return this.request('/ml/train_models/', {
+      method: 'POST',
+      body: JSON.stringify({
+        dataset_id: datasetId,
+        models: models
+      })
+    });
+  }
+
+  async listDatasets(): Promise<{ datasets: Dataset[]; count: number }> {
+    return this.request('/ml/list_datasets/');
+  }
+
+  async listModels(): Promise<{ models: TrainedModel[]; count: number }> {
+    return this.request('/ml/list_models/');
+  }
+
+  async testModel(modelId: string, testData: Record<string, any>[]) {
+    return this.request('/ml/test_model/', {
+      method: 'POST',
+      body: JSON.stringify({
+        model_id: modelId,
+        test_data: testData
+      })
+    });
+  }
+
+  async downloadModelReport(modelId: string) {
+    const url = `${this.baseURL}/ml/download_model_report/?model_id=${modelId}`;
+    
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.blob();
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
@@ -180,22 +276,60 @@ export interface Asset {
   asset_type: string;
   owner_department: string;
   owner_department_name?: string;
-  asset_value: string;
-  asset_value_name?: string;
+  
+  asset_category?: string;
+  industry_sector?: string;
+  compliance_framework?: string;
+  nist_function?: string;
+  
+  business_criticality?: number;
+  regulatory_impact?: number;
+  operational_dependency?: number;
+  data_sensitivity?: number;
+  
+  classification?: string;
+  classification_value?: number;
+  
   confidentiality?: number;
   integrity?: number;
   availability?: number;
-  classification?: string;
-  classification_value?: number;
   risk_index?: number;
+  
+  likelihood?: number;
+  consequence?: number;
+  compliance_factor?: number;
+  industry_factor?: number;
+  
   calculated_risk_level?: number;
+  harm_value?: number;
   mathematical_risk_category?: string;
+  
   traditional_fuzzy_prediction?: string;
   modern_svm_prediction?: string;
   modern_dt_prediction?: string;
-  harm_value?: number;
+  
+  // Model confidence scores
+  traditional_fuzzy_confidence?: number;
+  modern_svm_confidence?: number;
+  modern_dt_confidence?: number;
+  
+  // Model classification scores
+  traditional_fuzzy_score?: number;
+  modern_svm_score?: number;
+  modern_dt_score?: number;
+  
+  standards_version?: string;
+  methodology?: string;
+  
   risk_treatment?: string;
   treatment_notes?: string;
+  comparison_performed_date?: string;
+  last_analysis_date?: string;
+  
+  nist_impact_level?: string;
+  iso27005_risk_level?: string;
+  standards_compliant?: boolean;
+  
   created_at?: string;
   updated_at?: string;
 }
@@ -204,19 +338,27 @@ export interface Department {
   id: string;
   name: string;
   description?: string;
+  reason?: string;
+  
+  // Enhanced organizational impact factors
+  business_criticality?: number;
+  regulatory_impact?: number;
+  operational_dependency?: number;
+  data_sensitivity?: number;
+  
+  risk_appetite?: string;
+  compliance_level?: string;
+  
+  organizational_impact?: number;
+  
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AssetType {
   id: string;
   name: string;
   description?: string;
-}
-
-export interface AssetValue {
-  id: string;
-  name: string;
-  description?: string;
-  value?: number;
 }
 
 export interface AssessmentQuestion {
@@ -253,6 +395,39 @@ export interface PerformanceMetrics {
     recall: number;
     f1_score: number;
   };
+}
+
+// ML Training interfaces
+export interface Dataset {
+  dataset_id: string;
+  dataset_type: string;
+  model_name: string;
+  upload_date: string;
+  total_records: number;
+  features_count: number;
+  target_classes: string[];
+  class_distribution: Record<string, number>;
+}
+
+export interface TrainedModel {
+  model_id: string;
+  model_type: string;
+  training_accuracy: number;
+  testing_accuracy: number;
+  cv_accuracy: number;
+  cv_std: number;
+  training_samples: number;
+  testing_samples: number;
+  features_used: string[];
+  target_classes: string[];
+  training_time: number;
+  model_path: string;
+}
+
+export interface ModelPrediction {
+  input: Record<string, any>;
+  prediction: string;
+  probabilities: Record<string, number>;
 }
 
 export default apiClient;

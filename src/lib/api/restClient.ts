@@ -74,10 +74,13 @@ export const assetAPI = {
     description?: string;
     asset_type: string;
     owner_department: string;
-    asset_value: string;
-    confidentiality?: number;
-    integrity?: number;
-    availability?: number;
+    asset_category?: string;
+    industry_sector?: string;
+    compliance_framework?: string;
+    business_criticality?: number;
+    regulatory_impact?: number;
+    operational_dependency?: number;
+    data_sensitivity?: number;
   }) => restClient.post('/assets/', data),
 
   // Update asset
@@ -168,8 +171,6 @@ export interface Asset {
   asset_type: string;
   owner_department: string;
   owner_department_name?: string;
-  asset_value: string;
-  asset_value_name?: string;
   classification?: string;
   classification_value?: number;
   confidentiality?: number;
