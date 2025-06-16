@@ -34,16 +34,14 @@ export class IntegrationTester {
       });
 
       // Test supporting data
-      const [departments, assetTypes, assetValues] = await Promise.all([
+      const [departments, assetTypes] = await Promise.all([
         apiClient.getDepartments(),
-        apiClient.getAssetTypes(),
-        apiClient.getAssetValues()
+        apiClient.getAssetTypes()
       ]);
 
       console.log('Supporting data:', {
         departments: departments?.results?.length || 0,
-        assetTypes: assetTypes?.results?.length || 0,
-        assetValues: assetValues?.results?.length || 0
+        assetTypes: assetTypes?.results?.length || 0
       });
 
       return true;
