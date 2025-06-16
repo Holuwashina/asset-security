@@ -694,7 +694,7 @@ const AssetsPage = () => {
               Delete Asset
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>"{assetToDelete?.name}"</strong>?
+              Are you sure you want to delete <strong>&quot;{assetToDelete?.name}&quot;</strong>?
               <br /><br />
               This action cannot be undone and will permanently delete the asset and remove all associated data including:
               <ul className="list-disc list-inside mt-2 space-y-1 text-sm">

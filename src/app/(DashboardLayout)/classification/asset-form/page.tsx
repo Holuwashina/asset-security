@@ -537,7 +537,7 @@ export default function AssetFormPage() {
                   rows={3}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Provide additional context about the asset's role and importance
+                  Provide additional context about the asset&apos;s role and importance
                 </p>
               </div>
 
@@ -623,7 +623,7 @@ export default function AssetFormPage() {
                   <span>1.0 - Extremely critical</span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  How important is this asset to your organization's operations?
+                  How important is this asset to your organization&apos;s operations?
                 </p>
               </div>
 
@@ -962,7 +962,7 @@ export default function AssetFormPage() {
             <Alert>
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Next Steps:</strong> After {assetId ? 'updating' : 'creating'} this asset, you can proceed to the classification phase where you'll conduct NIST SP 800-60 compliant impact assessment and risk analysis.
+                <strong>Next Steps:</strong> After {assetId ? 'updating' : 'creating'} this asset, you can proceed to the classification phase where you&apos;ll conduct NIST SP 800-60 compliant impact assessment and risk analysis.
               </AlertDescription>
             </Alert>
           </div>
